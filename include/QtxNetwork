@@ -1,0 +1,10 @@
+#ifndef QTXNETWORK_MODULE_H
+#define QTXNTEWORK_MODULE_H
+
+#include "../src/network/filedownload.h"
+#include "../src/network/filetransfer.h"
+#include "../src/network/filetransfermanager.h"
+#include "../src/network/fileupload.h"
+#include "../src/network/networkexchange.h"
+
+#endif
