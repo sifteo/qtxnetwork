@@ -1,7 +1,10 @@
 #ifndef FILETRANSFERMANAGER_H
 #define FILETRANSFERMANAGER_H
 
+#include "networkglobal.h"
 #include <QtCore>
+
+QTX_BEGIN_NAMESPACE
 
 class FileTransfer;
 
@@ -38,5 +41,8 @@ private:
     
     int mMaxConcurrent;
 };
+
+
+QTX_END_NAMESPACE
     
 #endif // FILETRANSFERMANAGER_H

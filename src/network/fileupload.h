@@ -1,8 +1,11 @@
 #ifndef FILEUPLOAD_H
 #define FILEUPLOAD_H
 
-#include <QtCore>
+#include "networkglobal.h"
 #include "filetransfer.h"
+#include <QtCore>
+
+QTX_BEGIN_NAMESPACE
 
 
 class NetworkExchange;
@@ -72,5 +75,8 @@ private:
     
     bool mDeleteWhenFinished;
 };
+
+
+QTX_END_NAMESPACE
 
 #endif // FILEUPLOAD_H

@@ -1,5 +1,7 @@
 #include "networkexchange.h"
 
+QTX_BEGIN_NAMESPACE
+
 
 NetworkExchange::NetworkExchange(const QNetworkRequest & request, QObject *parent /* = 0 */)
     : QObject(parent),
@@ -315,3 +317,6 @@ void NetworkExchange::dumpReplyInfo()
         qDebug() << pair.first.data() << ":" << pair.second.data();
     }
 }
+
+
+QTX_END_NAMESPACE

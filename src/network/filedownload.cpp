@@ -1,6 +1,8 @@
 #include "filedownload.h"
 #include "networkexchange.h"
 
+QTX_BEGIN_NAMESPACE
+
 
 FileDownload::FileDownload(NetworkExchange *connection)
     : mConnection(connection),
@@ -220,3 +222,6 @@ void FileDownload::onDataRxTimeout()
     setError(TimeoutError, "Data receive timeout");
     abort();
 }
+
+
+QTX_END_NAMESPACE

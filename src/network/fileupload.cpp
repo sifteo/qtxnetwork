@@ -1,6 +1,8 @@
 #include "fileupload.h"
 #include "networkexchange.h"
 
+QTX_BEGIN_NAMESPACE
+
 
 FileUpload::FileUpload(NetworkExchange *connection)
     : mConnection(connection),
@@ -179,3 +181,6 @@ void FileUpload::onDataTxTimeout()
     setError(TimeoutError, "Data receive timeout");
     abort();
 }
+
+
+QTX_END_NAMESPACE

@@ -1,8 +1,11 @@
 #ifndef NETWORKEXCHANGE_H
 #define NETWORKEXCHANGE_H
 
-#include <QtCore>
+#include "networkglobal.h"
 #include <QtNetwork>
+#include <QtCore>
+
+QTX_BEGIN_NAMESPACE
 
 // high level wrapper for QNetworkRequest / QNetworkReply pair, providing facilities for following redirects
 
@@ -84,5 +87,8 @@ private:
     
     QString mErrorString;
 };
+
+
+QTX_END_NAMESPACE
 
 #endif // NETWORKEXCHANGE_H

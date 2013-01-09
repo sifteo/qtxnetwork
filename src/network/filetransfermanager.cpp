@@ -1,6 +1,8 @@
 #include "filetransfermanager.h"
 #include "filetransfer.h"
 
+QTX_BEGIN_NAMESPACE
+
 
 FileTransferManager* FileTransferManager::_singleton = 0;
 
@@ -105,3 +107,6 @@ void FileTransferManager::onTransferError(quint32 code)
         startNext();
     }
 }
+
+
+QTX_END_NAMESPACE

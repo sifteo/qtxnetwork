@@ -1,6 +1,7 @@
 #ifndef QTXNETWORK_MODULE_H
 #define QTXNTEWORK_MODULE_H
 
+#include "../src/network/networkglobal.h"
 #include "../src/network/filedownload.h"
 #include "../src/network/filetransfer.h"
 #include "../src/network/filetransfermanager.h"
