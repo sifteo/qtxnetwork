@@ -42,7 +42,6 @@ public:
     
     QString errorString() const;
     
-    QNetworkAccessManager * networkAccessManager() const;
     void setNetworkAccessManager(QNetworkAccessManager *manager);
     
 signals:
@@ -53,6 +52,9 @@ signals:
     void redirected(const QUrl & url);
     void finished();
     void error(QNetworkReply::NetworkError code);
+    
+protected:
+    void setErrorString(const QString & str);
     
 private:
     void start(Method method, QIODevice *data = 0);

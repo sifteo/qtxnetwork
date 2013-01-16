@@ -97,6 +97,11 @@ QString NetworkExchange::errorString() const
     return mErrorString;
 }
 
+void NetworkExchange::setErrorString(const QString & str)
+{
+    mErrorString = str;
+}
+
 void NetworkExchange::start(Method method, QIODevice *data /* = 0 */)
 {
     if (!mAccessManager) {
@@ -104,7 +109,6 @@ void NetworkExchange::start(Method method, QIODevice *data /* = 0 */)
     }
     
     mReplyReceived = false;
-    mErrorString = "";
     
     QUrl url = mRequest.url();
     mRequest.setRawHeader("Host", url.host().toUtf8());
@@ -154,11 +158,6 @@ void NetworkExchange::redirect(const QUrl & url)
     get();
 }
 
-QNetworkAccessManager * NetworkExchange::networkAccessManager() const
-{
-    return mAccessManager;
-}
-
 void NetworkExchange::setNetworkAccessManager(QNetworkAccessManager *manager)
 {
     mAccessManager = manager;
@@ -166,8 +165,6 @@ void NetworkExchange::setNetworkAccessManager(QNetworkAccessManager *manager)
 
 void NetworkExchange::onMetaDataChanged()
 {
-    //qDebug() << "SNetworkConnection::metaDataChanged";
-    
     if (!mReplyReceived) {
         mReplyReceived = true;
         emit replyReceived();
@@ -186,45 +183,41 @@ void NetworkExchange::onMetaDataChanged()
         // finish, which could potentially take a while if it also has content
         // in the body, leaving other pending requests queued in the networking
         // layer.
+        QNetworkReply *redirectReply = mReply;
+        redirectReply->disconnect(this);
+        redirectReply->abort();
         
         if (mUrlsVisited.size() > mMaxRedirects) {
-            mErrorString = "Too many redirections";
+            setErrorString("Too many redirections");
             emit error(QNetworkReply::ProtocolUnknownError);
             emit finished();
             return;
         } else if (mUrlsVisited.contains(url)) {
-            mErrorString = "Infinite redirection loop detected";
+            setErrorString("Infinite redirection loop detected");
             emit error(QNetworkReply::ProtocolUnknownError);
             emit finished();
             return;
         }
         
         redirect(url);
+        
+        redirectReply->deleteLater();
+        redirectReply = 0;
     }
 }
 
 void NetworkExchange::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
-    //qDebug() << "SNetworkConnection::onDownloadProgress";
-    //qDebug() << "  bytesReceived: " << bytesReceived;
-    //qDebug() << "  bytesTotal: " << bytesTotal;
-    
     emit downloadProgress(bytesReceived, bytesTotal);
 }
 
 void NetworkExchange::onUploadProgress(qint64 bytesSent, qint64 bytesTotal)
 {
-    //qDebug() << "SNetworkConnection::onUploadProgress";
-    //qDebug() << "  bytesSent: " << bytesSent;
-    //qDebug() << "  bytesTotal: " << bytesTotal;
-    
     emit uploadProgress(bytesSent, bytesTotal);
 }
 
 void NetworkExchange::onReadyRead()
 {
-    //qDebug() << "SNetworkConnection::onReadyRead";
-    
     if (!mReplyReceived) {
         mReplyReceived = true;
         emit replyReceived();
@@ -235,8 +228,6 @@ void NetworkExchange::onReadyRead()
 
 void NetworkExchange::onFinished()
 {
-    //qDebug() << "SNetworkConnection::onFinished";
-    
     if (!mReplyReceived) {
         mReplyReceived = true;
         emit replyReceived();
@@ -256,19 +247,24 @@ void NetworkExchange::onFinished()
     }
     
     if (!url.isEmpty()) {
+        QNetworkReply *redirectReply = mReply;
+    
         if (mUrlsVisited.size() > mMaxRedirects) {
-            mErrorString = "Too many redirections";
+            setErrorString("Too many redirections");
             emit error(QNetworkReply::ProtocolUnknownError);
             emit finished();
             return;
         } else if (mUrlsVisited.contains(url)) {
-            mErrorString = "Infinite redirection loop detected";
+            setErrorString("Infinite redirection loop detected");
             emit error(QNetworkReply::ProtocolUnknownError);
             emit finished();
             return;
         }
         
         redirect(url);
+        
+        redirectReply->deleteLater();
+        redirectReply = 0;
     } else {
         emit finished();
     }
@@ -276,16 +272,12 @@ void NetworkExchange::onFinished()
 
 void NetworkExchange::onError(QNetworkReply::NetworkError code)
 {
-    //qDebug() << "SNetworkConnection::onError";
-    //qDebug() << "  code: " << code;
-    //qDebug() << "  msg: " << mReply->errorString();
-    
     // NOTE: According to Qt 4.7 documentation, the finished() signal will
     //       "probably" follow.  In all cases encountered, this seems to be the
     //       case, so finalizing the connection is deferred until then.
     //       See: http://doc.trolltech.com/4.7/qnetworkreply.html#error-2
     
-    mErrorString = mReply->errorString();
+    setErrorString(mReply->errorString());
     emit error(code);
 }
 

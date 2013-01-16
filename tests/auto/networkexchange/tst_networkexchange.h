@@ -20,14 +20,17 @@ private slots:
     void cleanup();
     
     void testGet();
+    void testPost();
     
 private:
     QEventLoop mEventLoop;
     MockNetworkAccessManager *mNetAccessManager;
     NetworkExchange *mExchange;
+    QBuffer *mBuffer;
+    QByteArray mData;
     
 public:
-    QIODevice *createIncomingData(const QNetworkRequest & req);
+    QIODevice *createIncomingData(const QNetworkRequest & req, QIODevice * outgoingData = 0);
     
 public slots:
     void onFinished();
