@@ -1,8 +1,14 @@
 include(features/qtx_testcase.prf)
 
 
-INCLUDEPATH += ../../../src/network
+QT += network
 
-LIBS += -L../../../lib
+INCLUDEPATH += \
+    ../../../src/network \
+    ../../../../qtxmocknetwork/include
 
-LIBS += -lQtxNetwork
+LIBS += \
+    -L../../../lib \
+    -L../../../../qtxmocknetwork/lib
+
+LIBS += -lQtxNetwork -lQtxMockNetwork

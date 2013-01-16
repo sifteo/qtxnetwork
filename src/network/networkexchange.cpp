@@ -64,6 +64,14 @@ QVariant NetworkExchange::replyHeader(QNetworkRequest::KnownHeaders header) cons
     return QVariant();
 }
 
+QByteArray NetworkExchange::replyRawHeader(const QByteArray & headerName) const
+{
+    if (mReply) {
+        return mReply->rawHeader(headerName);
+    }
+    return QByteArray();
+}
+
 QByteArray NetworkExchange::readAll()
 {
     if (mReply) {
@@ -74,10 +82,8 @@ QByteArray NetworkExchange::readAll()
 
 void NetworkExchange::abort()
 {
-    //qDebug() << "NetworkExchange::abort";
-    
     if (mReply) {
-        return mReply->abort();
+        mReply->abort();
     }
 }
 
@@ -135,9 +141,6 @@ void NetworkExchange::start(Method method, QIODevice *data /* = 0 */)
 
 void NetworkExchange::redirect(const QUrl & url)
 {
-    //qDebug() << "SNetworkConnection::redirect";
-    //qDebug() << "  url: " << url.toString();
-    
     emit redirected(url);
     
     // Set the redirect URL on the request.  By reusing the existing request (as
@@ -179,19 +182,14 @@ void NetworkExchange::onMetaDataChanged()
         // in the body, leaving other pending requests queued in the networking
         // layer.
         
-        mReply->disconnect(this);
-        mReply->abort();
-        mReply->deleteLater();
-        mReply = 0;
-        
         if (mUrlsVisited.size() > mMaxRedirects) {
             mErrorString = "Too many redirections";
-            emit error(TooManyRedirectsError);
+            emit error(QNetworkReply::ProtocolUnknownError);
             emit finished();
             return;
         } else if (mUrlsVisited.contains(url)) {
             mErrorString = "Infinite redirection loop detected";
-            emit error(RedirectLoopError);
+            emit error(QNetworkReply::ProtocolUnknownError);
             emit finished();
             return;
         }
@@ -252,19 +250,15 @@ void NetworkExchange::onFinished()
         url = mReply->url().resolved(url);
     }
     
-    mReply->disconnect(this);
-    mReply->deleteLater();
-    mReply = 0;
-    
     if (!url.isEmpty()) {
         if (mUrlsVisited.size() > mMaxRedirects) {
             mErrorString = "Too many redirections";
-            emit error(TooManyRedirectsError);
+            emit error(QNetworkReply::ProtocolUnknownError);
             emit finished();
             return;
         } else if (mUrlsVisited.contains(url)) {
             mErrorString = "Infinite redirection loop detected";
-            emit error(RedirectLoopError);
+            emit error(QNetworkReply::ProtocolUnknownError);
             emit finished();
             return;
         }

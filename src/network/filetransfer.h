@@ -1,5 +1,5 @@
-#ifndef FILETRANSFER_H
-#define FILETRANSFER_H
+#ifndef QTXNETWORK_FILETRANSFER_H
+#define QTXNETWORK_FILETRANSFER_H
 
 #include "networkglobal.h"
 #include <QtCore>
@@ -25,4 +25,4 @@ public:
 
 QTX_END_NAMESPACE
 
-#endif // FILETRANSFER_H
+#endif // QTXNETWORK_FILETRANSFER_H

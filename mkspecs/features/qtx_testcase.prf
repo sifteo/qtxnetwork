@@ -1,7 +1,7 @@
 check.commands += $(TESTRUNNER)
 
 macx {
-    check.commands += DYLD_LIBRARY_PATH=../../../lib
+    check.commands += DYLD_LIBRARY_PATH=../../../lib:../../../../qtxmocknetwork/lib
 
     app_bundle: check.commands += ./$(QMAKE_TARGET).app/Contents/MacOS/$(QMAKE_TARGET)
     else:       check.commands += ./$(QMAKE_TARGET)

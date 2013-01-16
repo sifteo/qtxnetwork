@@ -1,5 +1,5 @@
-#ifndef NETWORKEXCHANGE_H
-#define NETWORKEXCHANGE_H
+#ifndef QTXNETWORK_NETWORKEXCHANGE_H
+#define QTXNETWORK_NETWORKEXCHANGE_H
 
 #include "networkglobal.h"
 #include <QtNetwork>
@@ -22,12 +22,6 @@ public:
         DeleteMethod
     } Method;
     
-    typedef enum {
-        UserError             = 511,
-        TooManyRedirectsError = UserError + 1,
-        RedirectLoopError     = UserError + 2,
-    } Error;
-    
 public:
     NetworkExchange(const QNetworkRequest & request, QObject *parent = 0);
     virtual ~NetworkExchange();
@@ -41,6 +35,7 @@ public:
     QUrl requestUrl() const;
     QVariant replyAttribute(QNetworkRequest::Attribute code) const;
     QVariant replyHeader(QNetworkRequest::KnownHeaders header) const;
+    QByteArray replyRawHeader(const QByteArray & headerName) const;
     QByteArray readAll();
     void abort();
     
@@ -56,7 +51,7 @@ signals:
     void readyRead();
     void redirected(const QUrl & url);
     void finished();
-    void error(quint32 code);
+    void error(QNetworkReply::NetworkError code);
     
 private:
     void start(Method method, QIODevice *data = 0);
@@ -91,4 +86,4 @@ private:
 
 QTX_END_NAMESPACE
 
-#endif // NETWORKEXCHANGE_H
+#endif // QTXNETWORK_NETWORKEXCHANGE_H
