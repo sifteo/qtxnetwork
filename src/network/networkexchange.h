@@ -33,6 +33,7 @@ public:
     void deleteResource();
     
     QUrl requestUrl() const;
+    QByteArray requestRawHeader(const QByteArray & headerName) const;
     QVariant replyAttribute(QNetworkRequest::Attribute code) const;
     QVariant replyHeader(QNetworkRequest::KnownHeaders header) const;
     QByteArray replyRawHeader(const QByteArray & headerName) const;

@@ -48,6 +48,11 @@ QUrl NetworkExchange::requestUrl() const
     return mRequest.url();
 }
 
+QByteArray NetworkExchange::requestRawHeader(const QByteArray & headerName) const
+{
+    return mRequest.rawHeader(headerName);
+}
+
 QVariant NetworkExchange::replyAttribute(QNetworkRequest::Attribute code) const
 {
     if (mReply) {

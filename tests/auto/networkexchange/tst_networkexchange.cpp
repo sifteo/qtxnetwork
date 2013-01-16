@@ -51,6 +51,7 @@ void tst_NetworkExchange::testGet()
     QVERIFY(errorSpy.count() == 0);
     
     QCOMPARE(mExchange->requestUrl(), QUrl("http://www.example.com/hello-world.txt"));
+    QCOMPARE(QString::fromUtf8(mExchange->requestRawHeader("Host")), QString("www.example.com"));
     QCOMPARE(mExchange->replyAttribute(QNetworkRequest::HttpReasonPhraseAttribute).toString(), QString("OK"));
     QCOMPARE(QString::fromUtf8(mExchange->replyRawHeader("Content-Type")), QString("text/plain"));
 }
