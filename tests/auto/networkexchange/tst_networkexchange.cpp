@@ -39,6 +39,7 @@ void tst_NetworkExchange::cleanup()
 void tst_NetworkExchange::testGet()
 {
     QNetworkRequest request(QUrl("http://www.example.com/hello-world.txt"));
+    
     mExchange = new NetworkExchange(request);
     mExchange->setNetworkAccessManager(mNetAccessManager);
     connect(mExchange, SIGNAL(finished()), SLOT(onFinished()));
@@ -94,6 +95,37 @@ void tst_NetworkExchange::testPost()
     QCOMPARE(QString::fromUtf8(mExchange->requestRawHeader("Host")), QString("www.example.com"));
     QCOMPARE(mExchange->replyAttribute(QNetworkRequest::HttpReasonPhraseAttribute).toString(), QString("OK"));
     QCOMPARE(QString::fromUtf8(mExchange->replyRawHeader("Content-Type")), QString("text/plain"));
+    QCOMPARE(QString::fromUtf8(mExchange->readAll()), QString("Hello World!"));
+}
+
+void tst_NetworkExchange::testErrorResponse()
+{
+    QNetworkRequest request(QUrl("http://www.example.com/error.json"));
+    
+    mExchange = new NetworkExchange(request);
+    mExchange->setNetworkAccessManager(mNetAccessManager);
+    connect(mExchange, SIGNAL(finished()), SLOT(onFinished()));
+    connect(mExchange, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(onError(QNetworkReply::NetworkError)));
+
+    QSignalSpy replyReceivedSpy(mExchange, SIGNAL(replyReceived()));
+    QSignalSpy redirectedSpy(mExchange, SIGNAL(redirected(const QUrl &)));
+    QSignalSpy finishedSpy(mExchange, SIGNAL(finished()));
+    QSignalSpy errorSpy(mExchange, SIGNAL(error(QNetworkReply::NetworkError)));
+    QList<QVariant> arguments;
+
+    mExchange->get();
+    mEventLoop.exec();
+
+    QVERIFY(replyReceivedSpy.count() == 1);
+    QVERIFY(redirectedSpy.count() == 0);
+    QVERIFY(finishedSpy.count() == 1);
+    QVERIFY(errorSpy.count() == 1);
+    
+    QCOMPARE(mExchange->requestUrl(), QUrl("http://www.example.com/error.json"));
+    QCOMPARE(QString::fromUtf8(mExchange->requestRawHeader("Host")), QString("www.example.com"));
+    QCOMPARE(mExchange->replyAttribute(QNetworkRequest::HttpReasonPhraseAttribute).toString(), QString("Internal Server Error"));
+    QCOMPARE(QString::fromUtf8(mExchange->replyRawHeader("Content-Type")), QString("application/json"));
+    QCOMPARE(QString::fromUtf8(mExchange->readAll()), QString("{ \"error\": \"something went wrong\" }"));
 }
 
 QIODevice *tst_NetworkExchange::createIncomingData(const QNetworkRequest & req, QIODevice * outgoingData /* = 0 */)
@@ -110,7 +142,9 @@ QIODevice *tst_NetworkExchange::createIncomingData(const QNetworkRequest & req, 
         }
     
         file = new QFile("data/hello-world.http");
-    }
+    } else if ("/error.json" == path) {
+        file = new QFile("data/500-internal-server-error.http");
+    } 
     
     if (file) {
         file->open(QIODevice::ReadOnly);

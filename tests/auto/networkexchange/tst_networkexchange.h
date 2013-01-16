@@ -22,6 +22,8 @@ private slots:
     void testGet();
     void testPost();
     
+    void testErrorResponse();
+    
 private:
     QEventLoop mEventLoop;
     MockNetworkAccessManager *mNetAccessManager;
