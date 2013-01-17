@@ -130,6 +130,36 @@ void tst_NetworkExchange::testRedirect()
     QCOMPARE(QString::fromUtf8(mExchange->readAll()), QString("Hello World!"));
 }
 
+void tst_NetworkExchange::testRedirectLoop()
+{
+    QNetworkRequest request(QUrl("http://www.example.com/redirect-loop-1"));
+    
+    mExchange = new NetworkExchange(request);
+    mExchange->setNetworkAccessManager(mNetAccessManager);
+    connect(mExchange, SIGNAL(finished()), SLOT(onFinished()));
+    connect(mExchange, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(onError(QNetworkReply::NetworkError)));
+
+    QSignalSpy replyReceivedSpy(mExchange, SIGNAL(replyReceived()));
+    QSignalSpy redirectedSpy(mExchange, SIGNAL(redirected(const QUrl &)));
+    QSignalSpy finishedSpy(mExchange, SIGNAL(finished()));
+    QSignalSpy errorSpy(mExchange, SIGNAL(error(QNetworkReply::NetworkError)));
+    QList<QVariant> arguments;
+
+    mExchange->get();
+    mEventLoop.exec();
+
+    QVERIFY(replyReceivedSpy.count() == 2);
+    QVERIFY(redirectedSpy.count() == 1);
+    QVERIFY(finishedSpy.count() == 1);
+    QVERIFY(errorSpy.count() == 1);
+    
+    QCOMPARE(mExchange->requestUrl(), QUrl("http://www.example.com/redirect-loop-2"));
+    QCOMPARE(QString::fromUtf8(mExchange->requestRawHeader("Host")), QString("www.example.com"));
+    QCOMPARE(mExchange->replyAttribute(QNetworkRequest::HttpReasonPhraseAttribute).toString(), QString("Found"));
+    QCOMPARE(QString::fromUtf8(mExchange->replyRawHeader("Content-Type")), QString("application/json"));
+    QCOMPARE(QString::fromUtf8(mExchange->readAll()), QString("{ \"redirect\": true }"));
+}
+
 void tst_NetworkExchange::testErrorResponse()
 {
     QNetworkRequest request(QUrl("http://www.example.com/error.json"));
@@ -178,6 +208,10 @@ QIODevice *tst_NetworkExchange::createIncomingData(const QNetworkRequest & req, 
         file = new QFile("data/500-internal-server-error.http");
     } else if ("/redirect-to-hello-world" == path) {
         file = new QFile("data/redirect-to-hello-world.http");
+    } else if ("/redirect-loop-1" == path) {
+        file = new QFile("data/redirect-loop-1.http");
+    } else if ("/redirect-loop-2" == path) {
+        file = new QFile("data/redirect-loop-2.http");
     }
     
     if (file) {

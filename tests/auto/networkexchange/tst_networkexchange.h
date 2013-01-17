@@ -23,6 +23,7 @@ private slots:
     void testPost();
     
     void testRedirect();
+    void testRedirectLoop();
     
     void testErrorResponse();
     
