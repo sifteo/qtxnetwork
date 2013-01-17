@@ -20,6 +20,7 @@ private slots:
     void cleanup();
     
     void testDownload();
+    void testErrorResponse();
     
 private:
     QEventLoop mEventLoop;

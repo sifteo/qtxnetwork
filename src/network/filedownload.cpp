@@ -157,8 +157,6 @@ void FileDownload::onReplyReceived()
 
 void FileDownload::onReadyRead()
 {
-    //qDebug() << "FileDownload::onReadyRead";
-    
     if (!mFile) {
         qWarning() << "DownloadTask attempted to read data with invalid file";
         return;
@@ -191,8 +189,6 @@ void FileDownload::onRedirected(const QUrl & url)
 
 void FileDownload::onFinished()
 {
-    //qDebug() << "FileDownload::onFinished";
-    
     if (!mFile) {
         qWarning() << "FileDownload attempted to finish with invalid file";
         return;
@@ -205,9 +201,9 @@ void FileDownload::onFinished()
         this->deleteLater();
     }
     
-    if (!error()) {
+    //if (!error()) {
         emit finished();
-    }
+    //}
 }
 
 void FileDownload::onError(QNetworkReply::NetworkError code)
