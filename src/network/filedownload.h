@@ -1,8 +1,9 @@
-#ifndef FILEDOWNLOAD_H
-#define FILEDOWNLOAD_H
+#ifndef QTXNETWORK_FILEDOWNLOAD_H
+#define QTXNETWORK_FILEDOWNLOAD_H
 
 #include "networkglobal.h"
 #include "filetransfer.h"
+#include <QtNetwork>
 #include <QtCore>
 
 QTX_BEGIN_NAMESPACE
@@ -22,7 +23,7 @@ public:
     } Error;
 
 public:
-    FileDownload(NetworkExchange *connection);
+    FileDownload(const QNetworkRequest & request);
     virtual ~FileDownload();
     
     void start();
@@ -41,12 +42,14 @@ public:
     quint32 error() const;
     QString errorString() const;
     
+    void setNetworkAccessManager(QNetworkAccessManager *manager);
+    
 signals:
     void started();
     void redirected(const QUrl & url);
     void progress(qint64 partial, qint64 total);
     void finished();
-    void error(quint32 code);
+    void error(QNetworkReply::NetworkError code);
     
 protected:
     void setError(quint32 code, const QString & string);
@@ -57,10 +60,11 @@ private slots:
     void onReadyRead();
     void onRedirected(const QUrl & url);
     void onFinished();
-    void onError(quint32 code);
+    void onError(QNetworkReply::NetworkError code);
     void onDataRxTimeout();
     
 private:
+    QNetworkRequest mRequest;
     NetworkExchange *mConnection;
     QUrl mOriginalUrl;
     
@@ -78,9 +82,11 @@ private:
     QString mErrorString;
     
     bool mDeleteWhenFinished;
+    
+    QNetworkAccessManager *mAccessManager;
 };
 
 
 QTX_END_NAMESPACE
 
-#endif // FILEDOWNLOAD_H
+#endif // QTXNETWORK_FILEDOWNLOAD_H

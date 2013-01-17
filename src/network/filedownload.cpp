@@ -4,8 +4,11 @@
 QTX_BEGIN_NAMESPACE
 
 
-FileDownload::FileDownload(NetworkExchange *connection)
-    : mConnection(connection),
+//FileDownload::FileDownload(NetworkExchange *connection)
+FileDownload::FileDownload(const QNetworkRequest & request)
+    : //mConnection(connection),
+      mRequest(request),
+      mConnection(0),
       mFile(0),
       mBytesReceived(0),
       mBytesTotal(0),
@@ -13,10 +16,12 @@ FileDownload::FileDownload(NetworkExchange *connection)
       mDataRxTimeout(60000),  // 60000 msec = 60 sec = 1 min
       mRedirecting(false),
       mError(0),
-      mDeleteWhenFinished(false)
+      mDeleteWhenFinished(false),
+      mAccessManager(0)
 {
-    mConnection->setParent(this);
-    mOriginalUrl = connection->requestUrl();
+    //mConnection->setParent(this);
+    //mOriginalUrl = connection->requestUrl();
+    mOriginalUrl = mRequest.url();
 }
 
 FileDownload::~FileDownload()
@@ -29,12 +34,17 @@ void FileDownload::start()
     //qDebug() << "  thread: " << QThread::currentThread();
     //qDebug() << "  path: " << mPath;
     
+    mConnection = new NetworkExchange(mRequest, this);
+    if (mAccessManager) {
+        mConnection->setNetworkAccessManager(mAccessManager);
+    }
+    
     connect(mConnection, SIGNAL(replyReceived()), SLOT(onReplyReceived()));
     connect(mConnection, SIGNAL(downloadProgress(qint64, qint64)), SLOT(onDownloadProgress(qint64, qint64)));
     connect(mConnection, SIGNAL(readyRead()), SLOT(onReadyRead()));
     connect(mConnection, SIGNAL(redirected(const QUrl &)), SLOT(onRedirected(const QUrl &)));
     connect(mConnection, SIGNAL(finished()), SLOT(onFinished()));
-    connect(mConnection, SIGNAL(error(quint32)), SLOT(onError(quint32)));
+    connect(mConnection, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(onError(QNetworkReply::NetworkError)));
     connect(&mDataRxTimer, SIGNAL(timeout()), this, SLOT(onDataRxTimeout()));
     
     emit started();
@@ -104,6 +114,11 @@ void FileDownload::setError(quint32 code, const QString & string)
     mErrorString = string;
 }
 
+void FileDownload::setNetworkAccessManager(QNetworkAccessManager *manager)
+{
+    mAccessManager = manager;
+}
+
 void FileDownload::onReplyReceived()
 {
     //qDebug() << "FileDownload::onReplyReceived";
@@ -135,7 +150,7 @@ void FileDownload::onReplyReceived()
     if (!mFile->open(QFile::WriteOnly | QFile::Truncate)) {
         QFile::FileError err = mFile->error();
         setError(FileErrorDomain + err, mFile->errorString());
-        emit error(error());
+        emit error(QNetworkReply::UnknownContentError);
         return;
     }
 }
@@ -195,7 +210,7 @@ void FileDownload::onFinished()
     }
 }
 
-void FileDownload::onError(quint32 code)
+void FileDownload::onError(QNetworkReply::NetworkError code)
 {
     qDebug() << "FileDownload::onError";
     qDebug() << "  code: " << code;
@@ -207,7 +222,7 @@ void FileDownload::onError(quint32 code)
     if (error() != TimeoutError) {
         setError(code, mConnection->errorString());
     }
-    emit error(error());
+    emit error(code);
 }
 
 void FileDownload::onDataRxTimeout()
