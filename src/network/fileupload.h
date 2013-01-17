@@ -3,6 +3,7 @@
 
 #include "networkglobal.h"
 #include "filetransfer.h"
+#include <QtNetwork>
 #include <QtCore>
 
 QTX_BEGIN_NAMESPACE
@@ -23,7 +24,8 @@ public:
     } Error;
 
 public:
-    FileUpload(NetworkExchange *connection);
+    //FileUpload(NetworkExchange *connection);
+    FileUpload(const QNetworkRequest & request);
     virtual ~FileUpload();
     
     void start();
@@ -37,11 +39,13 @@ public:
     quint32 error() const;
     QString errorString() const;
     
+    void setNetworkAccessManager(QNetworkAccessManager *manager);
+    
 signals:
     void started();
     void progress(qint64 partial, qint64 total);
     void finished();
-    void error(quint32 code);
+    void error(QNetworkReply::NetworkError code);
     
 protected:
     void setError(quint32 code, const QString & string);
@@ -53,10 +57,11 @@ private slots:
     void onReadyRead();
     void onRedirected(const QUrl & url);
     void onFinished();
-    void onError(quint32 code);
+    void onError(QNetworkReply::NetworkError code);
     void onDataTxTimeout();
     
 private:
+    QNetworkRequest mRequest;
     NetworkExchange *mConnection;
     QUrl mOriginalUrl;
     
@@ -74,6 +79,8 @@ private:
     QString mErrorString;
     
     bool mDeleteWhenFinished;
+    
+    QNetworkAccessManager *mAccessManager;
 };
 
 

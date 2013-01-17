@@ -4,16 +4,19 @@
 QTX_BEGIN_NAMESPACE
 
 
-FileUpload::FileUpload(NetworkExchange *connection)
-    : mConnection(connection),
+//FileUpload::FileUpload(NetworkExchange *connection)
+FileUpload::FileUpload(const QNetworkRequest & request)
+    : mRequest(request),
+      mConnection(0),
       mBytesSent(0),
       mBytesTotal(0),
       mDataTxTimeout(60000),  // 60000 msec = 60 sec = 1 min
       mRedirecting(false),
       mError(0),
-      mDeleteWhenFinished(false)
+      mDeleteWhenFinished(false),
+      mAccessManager(0)
 {
-    mConnection->setParent(this);
+    //mConnection->setParent(this);
 }
 
 FileUpload::~FileUpload()
@@ -26,11 +29,16 @@ void FileUpload::start()
     //qDebug() << "  path: " << mPath;
     //qDebug() << "  thread: " << QThread::currentThread();
     
+    mConnection = new NetworkExchange(mRequest, this);
+    if (mAccessManager) {
+        mConnection->setNetworkAccessManager(mAccessManager);
+    }
+    
     mFile = new QFile(mPath, this);
     if (!mFile->open(QFile::ReadOnly)) {
         QFile::FileError err = mFile->error();
         setError(FileErrorDomain + err, mFile->errorString());
-        emit error(error());
+        emit error(QNetworkReply::UnknownContentError);
         return;
     }
     
@@ -42,7 +50,7 @@ void FileUpload::start()
     connect(mConnection, SIGNAL(readyRead()), SLOT(onReadyRead()));
     connect(mConnection, SIGNAL(redirected(const QUrl &)), SLOT(onRedirected(const QUrl &)));
     connect(mConnection, SIGNAL(finished()), SLOT(onFinished()));
-    connect(mConnection, SIGNAL(error(quint32)), SLOT(onError(quint32)));
+    connect(mConnection, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(onError(QNetworkReply::NetworkError)));
     connect(&mDataTxTimer, SIGNAL(timeout()), this, SLOT(onDataTxTimeout()));
     
     emit started();
@@ -85,6 +93,11 @@ void FileUpload::setError(quint32 code, const QString & string)
 {
     mError = code;
     mErrorString = string;
+}
+
+void FileUpload::setNetworkAccessManager(QNetworkAccessManager *manager)
+{
+    mAccessManager = manager;
 }
 
 void FileUpload::onReplyReceived()
@@ -149,12 +162,12 @@ void FileUpload::onFinished()
         this->deleteLater();
     }
     
-    if (!error()) {
+    //if (!error()) {
         emit finished();
-    }
+    //}
 }
 
-void FileUpload::onError(quint32 code)
+void FileUpload::onError(QNetworkReply::NetworkError code)
 {
     qDebug() << "FileUpload::onError";
     qDebug() << "  code: " << code;
@@ -166,7 +179,7 @@ void FileUpload::onError(quint32 code)
     if (error() != TimeoutError) {
         setError(code, mConnection->errorString());
     }
-    emit error(error());
+    emit error(code);
 }
 
 void FileUpload::onDataTxTimeout()
