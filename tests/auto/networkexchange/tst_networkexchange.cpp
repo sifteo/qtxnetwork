@@ -98,6 +98,38 @@ void tst_NetworkExchange::testPost()
     QCOMPARE(QString::fromUtf8(mExchange->readAll()), QString("Hello World!"));
 }
 
+void tst_NetworkExchange::testRedirect()
+{
+    QNetworkRequest request(QUrl("http://www.example.com/redirect-to-hello-world"));
+    request.setRawHeader("X-Test", "true");
+    
+    mExchange = new NetworkExchange(request);
+    mExchange->setNetworkAccessManager(mNetAccessManager);
+    connect(mExchange, SIGNAL(finished()), SLOT(onFinished()));
+    connect(mExchange, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(onError(QNetworkReply::NetworkError)));
+
+    QSignalSpy replyReceivedSpy(mExchange, SIGNAL(replyReceived()));
+    QSignalSpy redirectedSpy(mExchange, SIGNAL(redirected(const QUrl &)));
+    QSignalSpy finishedSpy(mExchange, SIGNAL(finished()));
+    QSignalSpy errorSpy(mExchange, SIGNAL(error(QNetworkReply::NetworkError)));
+    QList<QVariant> arguments;
+
+    mExchange->get();
+    mEventLoop.exec();
+
+    QVERIFY(replyReceivedSpy.count() == 2);
+    QVERIFY(redirectedSpy.count() == 1);
+    QVERIFY(finishedSpy.count() == 1);
+    QVERIFY(errorSpy.count() == 0);
+    
+    QCOMPARE(mExchange->requestUrl(), QUrl("http://www.example.com/hello-world.txt"));
+    QCOMPARE(QString::fromUtf8(mExchange->requestRawHeader("Host")), QString("www.example.com"));
+    QCOMPARE(QString::fromUtf8(mExchange->requestRawHeader("X-Test")), QString("true"));
+    QCOMPARE(mExchange->replyAttribute(QNetworkRequest::HttpReasonPhraseAttribute).toString(), QString("OK"));
+    QCOMPARE(QString::fromUtf8(mExchange->replyRawHeader("Content-Type")), QString("text/plain"));
+    QCOMPARE(QString::fromUtf8(mExchange->readAll()), QString("Hello World!"));
+}
+
 void tst_NetworkExchange::testErrorResponse()
 {
     QNetworkRequest request(QUrl("http://www.example.com/error.json"));
@@ -144,7 +176,9 @@ QIODevice *tst_NetworkExchange::createIncomingData(const QNetworkRequest & req, 
         file = new QFile("data/hello-world.http");
     } else if ("/error.json" == path) {
         file = new QFile("data/500-internal-server-error.http");
-    } 
+    } else if ("/redirect-to-hello-world" == path) {
+        file = new QFile("data/redirect-to-hello-world.http");
+    }
     
     if (file) {
         file->open(QIODevice::ReadOnly);

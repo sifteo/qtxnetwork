@@ -22,6 +22,8 @@ private slots:
     void testGet();
     void testPost();
     
+    void testRedirect();
+    
     void testErrorResponse();
     
 private:
