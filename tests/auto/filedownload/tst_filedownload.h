@@ -20,6 +20,7 @@ private slots:
     void cleanup();
     
     void testDownload();
+    void testRedirect();
     void testErrorResponse();
     
 private:

@@ -1,0 +1,5 @@
+HTTP/1.1 302 Found
+Location: http://www.example.com/files/hello-world.txt
+Content-Type: application/json
+
+{ "redirect": true }
