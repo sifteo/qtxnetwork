@@ -23,6 +23,8 @@ private slots:
     void testPost();
     
     void testRedirect();
+    void testMultipleRedirects();
+    void testMaxRedirects();
     void testRedirectLoop();
     
     void testErrorResponse();

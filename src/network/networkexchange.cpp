@@ -158,6 +158,11 @@ void NetworkExchange::redirect(const QUrl & url)
     get();
 }
 
+void NetworkExchange::setMaxRedirects(qint32 max)
+{
+    mMaxRedirects = max;
+}
+
 void NetworkExchange::setNetworkAccessManager(QNetworkAccessManager *manager)
 {
     mAccessManager = manager;
