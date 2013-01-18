@@ -110,7 +110,7 @@ void FileDownload::onReplyReceived()
     
     if (!d->file->open(QFile::WriteOnly | QFile::Truncate)) {
         setError(QNetworkReply::UnknownContentError, d->file->errorString());
-        emit error(QNetworkReply::UnknownContentError);
+        abort();
         return;
     }
 }
@@ -121,7 +121,7 @@ void FileDownload::onReadyRead()
 
     if (!d->file) {
         setError(QNetworkReply::UnknownContentError, "Illegal attempt to write data to invalid file");
-        emit error(QNetworkReply::UnknownContentError);
+        abort();
         return;
     }
     
@@ -158,7 +158,8 @@ void FileDownload::onFinished()
 
     if (!d->file) {
         setError(QNetworkReply::UnknownContentError, "Illegal attempt to close invalid file");
-        emit error(QNetworkReply::UnknownContentError);
+        emit error(this->error());
+        emit finished();
         return;
     }
     
@@ -180,10 +181,10 @@ void FileDownload::onError(QNetworkReply::NetworkError code)
     
     // preserve custom errors, if set
     QNetworkReply::NetworkError e = this->error();
-    if (e != QNetworkReply::TimeoutError) {
+    if (e != QNetworkReply::NoError) {
         setError(code, d_ptr->exchange->errorString());
     }
-    emit error(code);
+    emit error(this->error());
 }
 
 void FileDownload::onDataRxTimeout()

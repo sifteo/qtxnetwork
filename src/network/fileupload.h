@@ -1,5 +1,5 @@
-#ifndef FILEUPLOAD_H
-#define FILEUPLOAD_H
+#ifndef QTXNETWORK_FILEUPLOAD_H
+#define QTXNETWORK_FILEUPLOAD_H
 
 #include "networkglobal.h"
 #include "filetransfer.h"
@@ -36,4 +36,4 @@ private slots:
 
 QTX_END_NAMESPACE
 
-#endif // FILEUPLOAD_H
+#endif // QTXNETWORK_FILEUPLOAD_H

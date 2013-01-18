@@ -31,7 +31,8 @@ void FileUpload::start()
     d->file = new QFile(d->path, this);
     if (!d->file->open(QFile::ReadOnly)) {
         setError(QNetworkReply::UnknownContentError, d->file->errorString());
-        emit error(QNetworkReply::UnknownContentError);
+        emit error(this->error());
+        emit finished();
         return;
     }
     
@@ -100,7 +101,8 @@ void FileUpload::onFinished()
 
     if (!d->file) {
         setError(QNetworkReply::UnknownContentError, "Illegal attempt to close invalid file");
-        emit error(QNetworkReply::UnknownContentError);
+        emit error(this->error());
+        emit finished();
         return;
     }
     
@@ -122,10 +124,10 @@ void FileUpload::onError(QNetworkReply::NetworkError code)
     
     // preserve custom errors, if set
     QNetworkReply::NetworkError e = this->error();
-    if (e != QNetworkReply::TimeoutError) {
+    if (e != QNetworkReply::NoError) {
         setError(code, d->exchange->errorString());
     }
-    emit error(code);
+    emit error(this->error());
 }
 
 void FileUpload::onDataTxTimeout()
