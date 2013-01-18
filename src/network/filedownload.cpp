@@ -15,7 +15,6 @@ FileDownload::FileDownload(const QNetworkRequest & request)
       mExpectedFileSize(-1),
       mDataRxTimeout(60000),  // 60000 msec = 60 sec = 1 min
       mRedirecting(false),
-      mError(0),
       mDeleteWhenFinished(false),
       mAccessManager(0)
 {
@@ -98,22 +97,6 @@ void FileDownload::setDeleteWhenFinished(bool autoDelete /* = true */)
     mDeleteWhenFinished = autoDelete;
 }
 
-quint32 FileDownload::error() const
-{
-    return mError;
-}
-
-QString FileDownload::errorString() const
-{
-    return mErrorString;
-}
-
-void FileDownload::setError(quint32 code, const QString & string)
-{
-    mError = code;
-    mErrorString = string;
-}
-
 void FileDownload::setNetworkAccessManager(QNetworkAccessManager *manager)
 {
     mAccessManager = manager;
@@ -148,8 +131,7 @@ void FileDownload::onReplyReceived()
     mFile = new QFile(mPath, this);
     
     if (!mFile->open(QFile::WriteOnly | QFile::Truncate)) {
-        QFile::FileError err = mFile->error();
-        setError(FileErrorDomain + err, mFile->errorString());
+        setError(QNetworkReply::UnknownContentError, mFile->errorString());
         emit error(QNetworkReply::UnknownContentError);
         return;
     }
@@ -215,7 +197,8 @@ void FileDownload::onError(QNetworkReply::NetworkError code)
     mDataRxTimer.stop();
     
     // preserve custom errors, if set
-    if (error() != TimeoutError) {
+    QNetworkReply::NetworkError e = this->error();
+    if (e != QNetworkReply::TimeoutError) {
         setError(code, mConnection->errorString());
     }
     emit error(code);
@@ -230,7 +213,7 @@ void FileDownload::onDataRxTimeout()
     // Aborting a connection will result an error signal being emitted, followed
     // by a finished signal.  To keep the lifecycle consistent, handling will be
     // done in the corresponding slots.
-    setError(TimeoutError, "Data receive timeout");
+    setError(QNetworkReply::TimeoutError, "Data receive timeout");
     abort();
 }
 

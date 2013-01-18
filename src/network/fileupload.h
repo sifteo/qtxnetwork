@@ -17,13 +17,6 @@ class FileUpload : public FileTransfer
     Q_OBJECT
 
 public:
-    typedef enum {
-        UserError       = 1023,
-        TimeoutError    = UserError + 1,
-        FileErrorDomain = 2056
-    } Error;
-
-public:
     //FileUpload(NetworkExchange *connection);
     FileUpload(const QNetworkRequest & request);
     virtual ~FileUpload();
@@ -36,19 +29,12 @@ public:
     void setUploadPath(const QString & path);
     void setDeleteWhenFinished(bool autoDelete = true);
     
-    quint32 error() const;
-    QString errorString() const;
-    
     void setNetworkAccessManager(QNetworkAccessManager *manager);
     
 signals:
     void started();
     void progress(qint64 partial, qint64 total);
     void finished();
-    void error(QNetworkReply::NetworkError code);
-    
-protected:
-    void setError(quint32 code, const QString & string);
     
 private slots:
     void onReplyReceived();
@@ -74,9 +60,6 @@ private:
     QTimer mDataTxTimer;
     int mDataTxTimeout;
     bool mRedirecting;
-    
-    quint32 mError;
-    QString mErrorString;
     
     bool mDeleteWhenFinished;
     

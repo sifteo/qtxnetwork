@@ -12,7 +12,6 @@ FileUpload::FileUpload(const QNetworkRequest & request)
       mBytesTotal(0),
       mDataTxTimeout(60000),  // 60000 msec = 60 sec = 1 min
       mRedirecting(false),
-      mError(0),
       mDeleteWhenFinished(false),
       mAccessManager(0)
 {
@@ -36,8 +35,7 @@ void FileUpload::start()
     
     mFile = new QFile(mPath, this);
     if (!mFile->open(QFile::ReadOnly)) {
-        QFile::FileError err = mFile->error();
-        setError(FileErrorDomain + err, mFile->errorString());
+        setError(QNetworkReply::UnknownContentError, mFile->errorString());
         emit error(QNetworkReply::UnknownContentError);
         return;
     }
@@ -77,22 +75,6 @@ void FileUpload::setUploadPath(const QString & path)
 void FileUpload::setDeleteWhenFinished(bool autoDelete /* = true */)
 {
     mDeleteWhenFinished = autoDelete;
-}
-
-quint32 FileUpload::error() const
-{
-    return mError;
-}
-
-QString FileUpload::errorString() const
-{
-    return mErrorString;
-}
-
-void FileUpload::setError(quint32 code, const QString & string)
-{
-    mError = code;
-    mErrorString = string;
 }
 
 void FileUpload::setNetworkAccessManager(QNetworkAccessManager *manager)
@@ -176,7 +158,7 @@ void FileUpload::onError(QNetworkReply::NetworkError code)
     mDataTxTimer.stop();
     
     // preserve custom errors, if set
-    if (error() != TimeoutError) {
+    if (error() != QNetworkReply::TimeoutError) {
         setError(code, mConnection->errorString());
     }
     emit error(code);
@@ -191,7 +173,7 @@ void FileUpload::onDataTxTimeout()
     // Aborting a connection will result an error signal being emitted, followed
     // by a finished signal.  To keep the lifecycle consistent, handling will be
     // done in the corresponding slots.
-    setError(TimeoutError, "Data receive timeout");
+    setError(QNetworkReply::TimeoutError, "Data receive timeout");
     abort();
 }
 
