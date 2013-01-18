@@ -6,8 +6,9 @@
 
 QTX_BEGIN_NAMESPACE
 
-class FileTransfer;
 
+class FileTransfer;
+class FileTransferManagerPrivate;
 
 class FileTransferManager : public QObject
 {
@@ -28,17 +29,13 @@ public:
     int maxConcurrent() const;
     void setMaxConcurrent(int max);
     
-private:
-    void startNext();
-    
 private slots:
     void onTransferFinished();
     
+protected:
+    FileTransferManagerPrivate *d_ptr;
 private:
-    QList<FileTransfer *> mActiveTransfers;
-    QList<FileTransfer *> mQueuedTransfers;
-    
-    int mMaxConcurrent;
+    Q_DECLARE_PRIVATE(FileTransferManager);
 };
 
 
