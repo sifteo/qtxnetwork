@@ -19,16 +19,10 @@ private slots:
     
     void testQueueing();
     void testQueueingAfterError();
-    
-    //void testUpload();
-    //void testErrorResponse();
+    void testMaxConcurrent();
     
 private:
     FileTransferManager *mManager;
-
-    //QEventLoop mEventLoop;
-    //MockNetworkAccessManager *mNetAccessManager;
-    //FileUpload *mUpload;
 };
 
 #endif // TST_FILETRANSFERMANAGER_H

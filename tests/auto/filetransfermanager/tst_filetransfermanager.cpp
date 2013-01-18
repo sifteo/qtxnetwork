@@ -67,5 +67,30 @@ void tst_FileTransferManager::testQueueingAfterError()
     QVERIFY(transfer4->isStarted());
 }
 
+void tst_FileTransferManager::testMaxConcurrent()
+{
+    mManager->setMaxConcurrent(2);
+
+    MockFileTransfer *transfer1 = new MockFileTransfer();
+    MockFileTransfer *transfer2 = new MockFileTransfer();
+    MockFileTransfer *transfer3 = new MockFileTransfer();
+    MockFileTransfer *transfer4 = new MockFileTransfer();
+    
+    mManager->add(transfer1);
+    mManager->add(transfer2);
+    mManager->add(transfer3);
+    mManager->add(transfer4);
+    
+    QVERIFY(transfer1->isStarted());
+    QVERIFY(transfer2->isStarted());
+    QVERIFY(!transfer3->isStarted());
+    QVERIFY(!transfer4->isStarted());
+    
+    transfer2->finish();
+    
+    QVERIFY(transfer3->isStarted());
+    QVERIFY(!transfer4->isStarted());
+}
+
 
 QTEST_APPLESS_MAIN(tst_FileTransferManager)
