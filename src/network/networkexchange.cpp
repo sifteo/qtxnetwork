@@ -3,181 +3,162 @@
 QTX_BEGIN_NAMESPACE
 
 
+class NetworkExchangePrivate
+{
+public:
+    typedef enum {
+        GetMethod,
+        HeadMethod,
+        PostMethod,
+        PutMethod,
+        DeleteMethod
+    } Method;
+
+    NetworkExchangePrivate(NetworkExchange *q);
+    virtual ~NetworkExchangePrivate();
+    
+    void start(Method method, QIODevice *data = 0);
+    void redirect(const QUrl & url);
+    
+    void dumpRequestInfo();
+    void dumpReplyInfo();
+    
+public:
+    NetworkExchange *q_ptr;
+    Q_DECLARE_PUBLIC(NetworkExchange);
+    
+    QNetworkAccessManager *netAccessManager;
+    Method method;
+    QNetworkRequest request;
+    QNetworkReply *reply;
+    
+    bool replyReceived;
+    QList<QUrl> urlsVisited;
+    qint32 maxRedirects;
+    
+    QString errorString;
+};
+
+
 NetworkExchange::NetworkExchange(const QNetworkRequest & request, QObject *parent /* = 0 */)
     : QObject(parent),
-      mAccessManager(0),
-      mRequest(request),
-      mReply(0),
-      mMethod(GetMethod),
-      mMaxRedirects(5),
-      mReplyReceived(false)
+      d_ptr(new NetworkExchangePrivate(this))
 {
+    d_ptr->request = request;
 }
 
 NetworkExchange::~NetworkExchange()
 {
+    if (d_ptr) {
+        delete d_ptr;
+        d_ptr = 0;
+    }
 }
 
 void NetworkExchange::get()
 {
-    start(GetMethod);
+    d_ptr->start(NetworkExchangePrivate::GetMethod);
 }
 
 void NetworkExchange::head()
 {
-    start(HeadMethod);
+    d_ptr->start(NetworkExchangePrivate::HeadMethod);
 }
 
 void NetworkExchange::post(QIODevice *data)
 {
-    start(PostMethod, data);
+    d_ptr->start(NetworkExchangePrivate::PostMethod, data);
 }
 
 void NetworkExchange::put(QIODevice *data)
 {
-    start(PutMethod, data);
+    d_ptr->start(NetworkExchangePrivate::PutMethod, data);
 }
 
 void NetworkExchange::deleteResource()
 {
-    start(DeleteMethod);
+    d_ptr->start(NetworkExchangePrivate::DeleteMethod);
+}
+
+void NetworkExchange::abort()
+{
+    if (d_ptr->reply) {
+        d_ptr->reply->abort();
+    }
 }
 
 QUrl NetworkExchange::requestUrl() const
 {
-    return mRequest.url();
+    return d_ptr->request.url();
 }
 
 QByteArray NetworkExchange::requestRawHeader(const QByteArray & headerName) const
 {
-    return mRequest.rawHeader(headerName);
+    return d_ptr->request.rawHeader(headerName);
 }
 
 QVariant NetworkExchange::replyAttribute(QNetworkRequest::Attribute code) const
 {
-    if (mReply) {
-        return mReply->attribute(code);
+    if (d_ptr->reply) {
+        return d_ptr->reply->attribute(code);
     }
     return QVariant();
 }
 
 QVariant NetworkExchange::replyHeader(QNetworkRequest::KnownHeaders header) const
 {
-    if (mReply) {
-        return mReply->header(header);
+    if (d_ptr->reply) {
+        return d_ptr->reply->header(header);
     }
     return QVariant();
 }
 
 QByteArray NetworkExchange::replyRawHeader(const QByteArray & headerName) const
 {
-    if (mReply) {
-        return mReply->rawHeader(headerName);
+    if (d_ptr->reply) {
+        return d_ptr->reply->rawHeader(headerName);
     }
     return QByteArray();
 }
 
 QByteArray NetworkExchange::readAll()
 {
-    if (mReply) {
-        return mReply->readAll();
+    if (d_ptr->reply) {
+        return d_ptr->reply->readAll();
     }
     return QByteArray();
 }
 
-void NetworkExchange::abort()
-{
-    if (mReply) {
-        mReply->abort();
-    }
-}
-
-QString NetworkExchange::errorString() const
-{
-    return mErrorString;
-}
-
-void NetworkExchange::setErrorString(const QString & str)
-{
-    mErrorString = str;
-}
-
-void NetworkExchange::start(Method method, QIODevice *data /* = 0 */)
-{
-    if (!mAccessManager) {
-        mAccessManager = new QNetworkAccessManager(this);
-    }
-    
-    mReplyReceived = false;
-    
-    QUrl url = mRequest.url();
-    mRequest.setRawHeader("Host", url.host().toUtf8());
-    
-    mUrlsVisited.append(url);
-    
-    switch(method) {
-    case GetMethod:
-        mReply = mAccessManager->get(mRequest);
-        break;
-    case HeadMethod:
-        mReply = mAccessManager->head(mRequest);
-        break;
-    case PostMethod:
-        mReply = mAccessManager->post(mRequest, data);
-        break;
-    case PutMethod:
-        mReply = mAccessManager->put(mRequest, data);
-        break;
-    case DeleteMethod:
-        mReply = mAccessManager->deleteResource(mRequest);
-        break;
-    }
-    
-    //dumpRequestInfo();
-    
-    if (mReply) {
-        mReply->setParent(this);
-        
-        connect(mReply, SIGNAL(metaDataChanged()), SLOT(onMetaDataChanged()));
-        connect(mReply, SIGNAL(downloadProgress(qint64, qint64)), SLOT(onDownloadProgress(qint64, qint64)));
-        connect(mReply, SIGNAL(uploadProgress(qint64, qint64)), SLOT(onUploadProgress(qint64, qint64)));
-        connect(mReply, SIGNAL(readyRead()), SLOT(onReadyRead()));
-        connect(mReply, SIGNAL(finished()), SLOT(onFinished()));
-        connect(mReply, SIGNAL(sslErrors(const QList<QSslError> &)), SLOT(onSslErrors(const QList<QSslError> &)));
-        connect(mReply, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(onError(QNetworkReply::NetworkError)));
-    }
-}
-
-void NetworkExchange::redirect(const QUrl & url)
-{
-    emit redirected(url);
-    
-    // Set the redirect URL on the request.  By reusing the existing request (as
-    // opposed to creating a new one), the existing headers are preserved.
-    mRequest.setUrl(url);
-    get();
-}
-
 void NetworkExchange::setMaxRedirects(qint32 max)
 {
-    mMaxRedirects = max;
+    d_ptr->maxRedirects = max;
 }
 
 void NetworkExchange::setNetworkAccessManager(QNetworkAccessManager *manager)
 {
-    mAccessManager = manager;
+    d_ptr->netAccessManager = manager;
+}
+
+QString NetworkExchange::errorString() const
+{
+    return d_ptr->errorString;
+}
+
+void NetworkExchange::setErrorString(const QString & str)
+{
+    d_ptr->errorString = str;
 }
 
 void NetworkExchange::onMetaDataChanged()
 {
-    if (!mReplyReceived) {
-        mReplyReceived = true;
+    if (!d_ptr->replyReceived) {
+        d_ptr->replyReceived = true;
         emit replyReceived();
     }
     
-    QUrl url = mReply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+    QUrl url = d_ptr->reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
     if (url.isRelative() && !url.isEmpty()) {
-        url = mReply->url().resolved(url);
+        url = d_ptr->reply->url().resolved(url);
     }
     
     if (!url.isEmpty()) {
@@ -188,23 +169,23 @@ void NetworkExchange::onMetaDataChanged()
         // finish, which could potentially take a while if it also has content
         // in the body, leaving other pending requests queued in the networking
         // layer.
-        QNetworkReply *redirectReply = mReply;
+        QNetworkReply *redirectReply = d_ptr->reply;
         redirectReply->disconnect(this);
         redirectReply->abort();
         
-        if (mUrlsVisited.size() > mMaxRedirects) {
+        if (d_ptr->urlsVisited.size() > d_ptr->maxRedirects) {
             setErrorString("Too many redirections");
             emit error(QNetworkReply::ProtocolUnknownError);
             emit finished();
             return;
-        } else if (mUrlsVisited.contains(url)) {
+        } else if (d_ptr->urlsVisited.contains(url)) {
             setErrorString("Infinite redirection loop detected");
             emit error(QNetworkReply::ProtocolUnknownError);
             emit finished();
             return;
         }
         
-        redirect(url);
+        d_ptr->redirect(url);
         
         redirectReply->deleteLater();
         redirectReply = 0;
@@ -223,8 +204,8 @@ void NetworkExchange::onUploadProgress(qint64 bytesSent, qint64 bytesTotal)
 
 void NetworkExchange::onReadyRead()
 {
-    if (!mReplyReceived) {
-        mReplyReceived = true;
+    if (!d_ptr->replyReceived) {
+        d_ptr->replyReceived = true;
         emit replyReceived();
     }
     
@@ -233,40 +214,40 @@ void NetworkExchange::onReadyRead()
 
 void NetworkExchange::onFinished()
 {
-    if (!mReplyReceived) {
-        mReplyReceived = true;
+    if (!d_ptr->replyReceived) {
+        d_ptr->replyReceived = true;
         emit replyReceived();
     }
     
     //dumpReplyInfo();
-    //QByteArray data = mReply->readAll();
+    //QByteArray data = reply->readAll();
     //qDebug() << data.data();
     
     
     // The QNetworkRequest::RedirectionTargetAttribute attribute is set on a
     // reply in which the server is redirecting the request.  For HTTP requests,
     // this means the status code is 3xx.
-    QUrl url = mReply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+    QUrl url = d_ptr->reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
     if (url.isRelative() && !url.isEmpty()) {
-        url = mReply->url().resolved(url);
+        url = d_ptr->reply->url().resolved(url);
     }
     
     if (!url.isEmpty()) {
-        QNetworkReply *redirectReply = mReply;
+        QNetworkReply *redirectReply = d_ptr->reply;
     
-        if (mUrlsVisited.size() > mMaxRedirects) {
+        if (d_ptr->urlsVisited.size() > d_ptr->maxRedirects) {
             setErrorString("Too many redirections");
             emit error(QNetworkReply::ProtocolUnknownError);
             emit finished();
             return;
-        } else if (mUrlsVisited.contains(url)) {
+        } else if (d_ptr->urlsVisited.contains(url)) {
             setErrorString("Infinite redirection loop detected");
             emit error(QNetworkReply::ProtocolUnknownError);
             emit finished();
             return;
         }
         
-        redirect(url);
+        d_ptr->redirect(url);
         
         redirectReply->deleteLater();
         redirectReply = 0;
@@ -282,7 +263,7 @@ void NetworkExchange::onError(QNetworkReply::NetworkError code)
     //       case, so finalizing the connection is deferred until then.
     //       See: http://doc.trolltech.com/4.7/qnetworkreply.html#error-2
     
-    setErrorString(mReply->errorString());
+    setErrorString(d_ptr->reply->errorString());
     emit error(code);
 }
 
@@ -291,25 +272,96 @@ void NetworkExchange::onSslErrors(const QList<QSslError> & errors)
     qDebug() << "!! NetworkExchange::onSslErrors";
     
     // FIXME: Take this out
-    mReply->ignoreSslErrors();
+    d_ptr->reply->ignoreSslErrors();
     
     Q_UNUSED(errors);
 }
 
-void NetworkExchange::dumpRequestInfo()
+
+NetworkExchangePrivate::NetworkExchangePrivate(NetworkExchange *q)
+    : q_ptr(q),
+      netAccessManager(0),
+      method(GetMethod),
+      reply(0),
+      replyReceived(false),
+      maxRedirects(5)
 {
-    qDebug() << "NETWORK REQUEST:";
-    foreach(QByteArray header, mRequest.rawHeaderList()) {
-        qDebug() << header.data() << ":" << mRequest.rawHeader(header).data();
+}
+
+NetworkExchangePrivate::~NetworkExchangePrivate()
+{
+}
+
+void NetworkExchangePrivate::start(Method method, QIODevice *data /* = 0 */)
+{
+    if (!netAccessManager) {
+        netAccessManager = new QNetworkAccessManager(q_ptr);
+    }
+    
+    replyReceived = false;
+    
+    QUrl url = request.url();
+    request.setRawHeader("Host", url.host().toUtf8());
+    
+    urlsVisited.append(url);
+    
+    switch(method) {
+    case GetMethod:
+        reply = netAccessManager->get(request);
+        break;
+    case HeadMethod:
+        reply = netAccessManager->head(request);
+        break;
+    case PostMethod:
+        reply = netAccessManager->post(request, data);
+        break;
+    case PutMethod:
+        reply = netAccessManager->put(request, data);
+        break;
+    case DeleteMethod:
+        reply = netAccessManager->deleteResource(request);
+        break;
+    }
+    
+    //dumpRequestInfo();
+    
+    if (reply) {
+        reply->setParent(q_ptr);
+        
+        q_ptr->connect(reply, SIGNAL(metaDataChanged()), SLOT(onMetaDataChanged()));
+        q_ptr->connect(reply, SIGNAL(downloadProgress(qint64, qint64)), SLOT(onDownloadProgress(qint64, qint64)));
+        q_ptr->connect(reply, SIGNAL(uploadProgress(qint64, qint64)), SLOT(onUploadProgress(qint64, qint64)));
+        q_ptr->connect(reply, SIGNAL(readyRead()), SLOT(onReadyRead()));
+        q_ptr->connect(reply, SIGNAL(finished()), SLOT(onFinished()));
+        q_ptr->connect(reply, SIGNAL(sslErrors(const QList<QSslError> &)), SLOT(onSslErrors(const QList<QSslError> &)));
+        q_ptr->connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(onError(QNetworkReply::NetworkError)));
     }
 }
 
-void NetworkExchange::dumpReplyInfo()
+void NetworkExchangePrivate::redirect(const QUrl & url)
 {
-    int code = mReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    emit q_ptr->redirected(url);
+    
+    // Set the redirect URL on the request.  By reusing the existing request (as
+    // opposed to creating a new one), the existing headers are preserved.
+    request.setUrl(url);
+    q_ptr->get();
+}
+
+void NetworkExchangePrivate::dumpRequestInfo()
+{
+    qDebug() << "NETWORK REQUEST:";
+    foreach(QByteArray header, request.rawHeaderList()) {
+        qDebug() << header.data() << ":" << request.rawHeader(header).data();
+    }
+}
+
+void NetworkExchangePrivate::dumpReplyInfo()
+{
+    int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     
     qDebug() << "NETWORK REPLY: " << code;
-    foreach(QNetworkReply::RawHeaderPair pair, mReply->rawHeaderPairs()) {
+    foreach(QNetworkReply::RawHeaderPair pair, reply->rawHeaderPairs()) {
         qDebug() << pair.first.data() << ":" << pair.second.data();
     }
 }

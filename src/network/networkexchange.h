@@ -9,18 +9,11 @@ QTX_BEGIN_NAMESPACE
 
 // high level wrapper for QNetworkRequest / QNetworkReply pair, providing facilities for following redirects
 
+class NetworkExchangePrivate;
+
 class NetworkExchange : public QObject
 {
     Q_OBJECT
-    
-public:
-    typedef enum {
-        GetMethod,
-        HeadMethod,
-        PostMethod,
-        PutMethod,
-        DeleteMethod
-    } Method;
     
 public:
     NetworkExchange(const QNetworkRequest & request, QObject *parent = 0);
@@ -31,6 +24,7 @@ public:
     void post(QIODevice *data);
     void put(QIODevice *data);
     void deleteResource();
+    void abort();
     
     QUrl requestUrl() const;
     QByteArray requestRawHeader(const QByteArray & headerName) const;
@@ -38,31 +32,23 @@ public:
     QVariant replyHeader(QNetworkRequest::KnownHeaders header) const;
     QByteArray replyRawHeader(const QByteArray & headerName) const;
     QByteArray readAll();
-    void abort();
-    
-    QString errorString() const;
     
     void setMaxRedirects(qint32 max);
     void setNetworkAccessManager(QNetworkAccessManager *manager);
     
+    QString errorString() const;
+    
 signals:
+    void replyReceived();
+    void redirected(const QUrl & url);
     void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
     void uploadProgress(qint64 bytesSent, qint64 bytesTotal);
-    void replyReceived();
     void readyRead();
-    void redirected(const QUrl & url);
     void finished();
     void error(QNetworkReply::NetworkError code);
     
 protected:
     void setErrorString(const QString & str);
-    
-private:
-    void start(Method method, QIODevice *data = 0);
-    void redirect(const QUrl & url);
-    
-    void dumpRequestInfo();
-    void dumpReplyInfo();
     
 private slots:
     void onMetaDataChanged();
@@ -73,18 +59,10 @@ private slots:
     void onError(QNetworkReply::NetworkError code);
     void onSslErrors(const QList<QSslError> & errors);
 
+protected:
+    NetworkExchangePrivate *d_ptr;
 private:
-    QNetworkAccessManager *mAccessManager;
-    QNetworkRequest mRequest;
-    QNetworkReply *mReply;
-    Method mMethod;
-    
-    QList<QUrl> mUrlsVisited;
-    qint32 mMaxRedirects;
-    
-    bool mReplyReceived;
-    
-    QString mErrorString;
+    Q_DECLARE_PRIVATE(NetworkExchange);
 };
 
 
