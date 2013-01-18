@@ -16,6 +16,8 @@ public:
     FileTransfer *q_ptr;
     Q_DECLARE_PUBLIC(FileTransfer);
     
+    bool autoDelete;
+    
     QNetworkReply::NetworkError errorCode;
     QString errorString;
 };

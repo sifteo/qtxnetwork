@@ -21,15 +21,20 @@ public:
     virtual void start() = 0;
     virtual void abort() = 0;
     
-    virtual void setDeleteWhenFinished(bool autoDelete = true) = 0;
+    void setAutoDelete(bool autoDelete = true);
     
     QNetworkReply::NetworkError error() const;
     QString errorString() const;
     
 signals:
+    void started();
+    void redirected(const QUrl & url);
+    void progress(qint64 partial, qint64 total);
+    void finished();
     void error(QNetworkReply::NetworkError code);
     
 protected:
+    bool autoDelete() const;
     void setError(QNetworkReply::NetworkError errorCode, const QString & errorString);
     
 private:

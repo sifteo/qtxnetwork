@@ -18,6 +18,16 @@ FileTransfer::~FileTransfer()
     }
 }
 
+bool FileTransfer::autoDelete() const
+{
+    return d_ptr->autoDelete;
+}
+
+void FileTransfer::setAutoDelete(bool autoDelete /* = true */)
+{
+    d_ptr->autoDelete = autoDelete;
+}
+
 QNetworkReply::NetworkError FileTransfer::error() const
 {
     return d_ptr->errorCode;
@@ -37,6 +47,7 @@ void FileTransfer::setError(QNetworkReply::NetworkError errorCode, const QString
 
 FileTransferPrivate::FileTransferPrivate(FileTransfer *q)
     : q_ptr(q),
+      autoDelete(false),
       errorCode(QNetworkReply::NoError)
 {
 }

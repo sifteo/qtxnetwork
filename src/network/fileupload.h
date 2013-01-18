@@ -27,14 +27,8 @@ public:
     QString sourcePath() const;
     
     void setUploadPath(const QString & path);
-    void setDeleteWhenFinished(bool autoDelete = true);
     
     void setNetworkAccessManager(QNetworkAccessManager *manager);
-    
-signals:
-    void started();
-    void progress(qint64 partial, qint64 total);
-    void finished();
     
 private slots:
     void onReplyReceived();
@@ -60,8 +54,6 @@ private:
     QTimer mDataTxTimer;
     int mDataTxTimeout;
     bool mRedirecting;
-    
-    bool mDeleteWhenFinished;
     
     QNetworkAccessManager *mAccessManager;
 };

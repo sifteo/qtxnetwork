@@ -12,7 +12,6 @@ FileUpload::FileUpload(const QNetworkRequest & request)
       mBytesTotal(0),
       mDataTxTimeout(60000),  // 60000 msec = 60 sec = 1 min
       mRedirecting(false),
-      mDeleteWhenFinished(false),
       mAccessManager(0)
 {
     //mConnection->setParent(this);
@@ -70,11 +69,6 @@ QString FileUpload::sourcePath() const
 void FileUpload::setUploadPath(const QString & path)
 {
     mPath = path;
-}
-
-void FileUpload::setDeleteWhenFinished(bool autoDelete /* = true */)
-{
-    mDeleteWhenFinished = autoDelete;
 }
 
 void FileUpload::setNetworkAccessManager(QNetworkAccessManager *manager)
@@ -140,7 +134,7 @@ void FileUpload::onFinished()
     mDataTxTimer.stop();
     mFile->close();
     
-    if (mDeleteWhenFinished) {
+    if (this->autoDelete()) {
         this->deleteLater();
     }
     

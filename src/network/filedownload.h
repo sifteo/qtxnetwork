@@ -30,15 +30,8 @@ public:
     
     void setDownloadPath(const QString & path);
     void setExpectedFileSize(qint64 size);
-    void setDeleteWhenFinished(bool autoDelete = true);
     
     void setNetworkAccessManager(QNetworkAccessManager *manager);
-    
-signals:
-    void started();
-    void redirected(const QUrl & url);
-    void progress(qint64 partial, qint64 total);
-    void finished();
     
 private slots:
     void onReplyReceived();
@@ -63,8 +56,6 @@ private:
     QTimer mDataRxTimer;
     int mDataRxTimeout;
     bool mRedirecting;
-    
-    bool mDeleteWhenFinished;
     
     QNetworkAccessManager *mAccessManager;
 };

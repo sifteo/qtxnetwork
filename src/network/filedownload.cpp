@@ -15,7 +15,6 @@ FileDownload::FileDownload(const QNetworkRequest & request)
       mExpectedFileSize(-1),
       mDataRxTimeout(60000),  // 60000 msec = 60 sec = 1 min
       mRedirecting(false),
-      mDeleteWhenFinished(false),
       mAccessManager(0)
 {
     //mConnection->setParent(this);
@@ -90,11 +89,6 @@ void FileDownload::setDownloadPath(const QString & path)
 void FileDownload::setExpectedFileSize(qint64 size)
 {
     mExpectedFileSize = size;
-}
-
-void FileDownload::setDeleteWhenFinished(bool autoDelete /* = true */)
-{
-    mDeleteWhenFinished = autoDelete;
 }
 
 void FileDownload::setNetworkAccessManager(QNetworkAccessManager *manager)
@@ -179,7 +173,7 @@ void FileDownload::onFinished()
     mDataRxTimer.stop();
     mFile->close();
     
-    if (mDeleteWhenFinished) {
+    if (this->autoDelete()) {
         this->deleteLater();
     }
     

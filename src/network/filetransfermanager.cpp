@@ -44,7 +44,7 @@ void FileTransferManager::reset()
     
     foreach (FileTransfer *transfer, mActiveTransfers) {
         transfer->disconnect(this);
-        transfer->setDeleteWhenFinished();
+        transfer->setAutoDelete();
         transfer->abort();
     }
     mActiveTransfers.clear();
