@@ -4,9 +4,9 @@
 QTX_BEGIN_NAMESPACE
 
 
-FileTransferManager* FileTransferManager::_singleton = 0;
+FileTransferManager *FileTransferManager::_singleton = 0;
 
-FileTransferManager* FileTransferManager::instance()
+FileTransferManager *FileTransferManager::instance()
 {
     if (!_singleton) {
         _singleton = new FileTransferManager();
@@ -28,6 +28,7 @@ FileTransferManager::~FileTransferManager()
 
 void FileTransferManager::add(FileTransfer *transfer)
 {
+    transfer->setParent(this);
     mQueuedTransfers.append(transfer);
     
     if (mActiveTransfers.size() < mMaxConcurrent) {
@@ -67,8 +68,9 @@ void FileTransferManager::startNext()
     }
     
     FileTransfer *transfer = mQueuedTransfers.takeFirst();
+    // `FileTransfer` always emits `finished`.  Connecting to `error` is not
+    // necessary because `error` is followed by `finish`.
     connect(transfer, SIGNAL(finished()), this, SLOT(onTransferFinished()));
-    connect(transfer, SIGNAL(error(quint32)), this, SLOT(onTransferError(quint32)));
     
     mActiveTransfers.append(transfer);
     transfer->start();
@@ -76,26 +78,6 @@ void FileTransferManager::startNext()
 
 void FileTransferManager::onTransferFinished()
 {
-    //qDebug() << "FileTransferManager::onTransferDone";
-    
-    FileTransfer* transfer = qobject_cast<FileTransfer *>(sender());
-    if (!transfer) { return; }
-    
-    mActiveTransfers.removeOne(transfer);
-    transfer->disconnect(this);
-    transfer->deleteLater();
-    
-    if (mActiveTransfers.size() < mMaxConcurrent) {
-        startNext();
-    }
-}
-
-void FileTransferManager::onTransferError(quint32 code)
-{
-    Q_UNUSED(code)
-    
-    //qDebug() << "FileTransferManager::onTransferError";
-    
     FileTransfer* transfer = qobject_cast<FileTransfer *>(sender());
     if (!transfer) { return; }
     

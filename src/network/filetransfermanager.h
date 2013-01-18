@@ -1,5 +1,5 @@
-#ifndef FILETRANSFERMANAGER_H
-#define FILETRANSFERMANAGER_H
+#ifndef QTXNETWORK_FILETRANSFERMANAGER_H
+#define QTXNETWORK_FILETRANSFERMANAGER_H
 
 #include "networkglobal.h"
 #include <QtCore>
@@ -14,9 +14,9 @@ class FileTransferManager : public QObject
     Q_OBJECT
     
 public:
-    static FileTransferManager* instance();
+    static FileTransferManager *instance();
 private:
-    static FileTransferManager* _singleton;
+    static FileTransferManager *_singleton;
     
 public:
     FileTransferManager(QObject *parent = 0);
@@ -33,7 +33,6 @@ private:
     
 private slots:
     void onTransferFinished();
-    void onTransferError(quint32 code);
     
 private:
     QList<FileTransfer *> mActiveTransfers;
@@ -45,4 +44,4 @@ private:
 
 QTX_END_NAMESPACE
     
-#endif // FILETRANSFERMANAGER_H
+#endif // QTXNETWORK_FILETRANSFERMANAGER_H
