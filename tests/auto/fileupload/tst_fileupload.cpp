@@ -36,7 +36,7 @@ void tst_FileUpload::testUpload()
     QNetworkRequest request(QUrl("http://www.example.com/upload"));
     
     mUpload = new FileUpload(request);
-    mUpload->setUploadPath("data/hello-world.txt");
+    mUpload->setSourcePath("data/hello-world.txt");
     mUpload->setNetworkAccessManager(mNetAccessManager);
     connect(mUpload, SIGNAL(finished()), SLOT(onFinished()));
     connect(mUpload, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(onError(QNetworkReply::NetworkError)));
@@ -61,7 +61,7 @@ void tst_FileUpload::testErrorResponse()
     QNetworkRequest request(QUrl("http://www.example.com/error"));
     
     mUpload = new FileUpload(request);
-    mUpload->setUploadPath("data/hello-world.txt");
+    mUpload->setSourcePath("data/hello-world.txt");
     mUpload->setNetworkAccessManager(mNetAccessManager);
     connect(mUpload, SIGNAL(finished()), SLOT(onFinished()));
     connect(mUpload, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(onError(QNetworkReply::NetworkError)));

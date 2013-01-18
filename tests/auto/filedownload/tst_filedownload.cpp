@@ -44,7 +44,7 @@ void tst_FileDownload::testDownload()
     QNetworkRequest request(QUrl("http://www.example.com/files/hello-world.txt"));
     
     mDownload = new FileDownload(request);
-    mDownload->setDownloadPath("tmp/download.dat");
+    mDownload->setDestinationPath("tmp/download.dat");
     mDownload->setNetworkAccessManager(mNetAccessManager);
     connect(mDownload, SIGNAL(finished()), SLOT(onFinished()));
     connect(mDownload, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(onError(QNetworkReply::NetworkError)));
@@ -79,7 +79,7 @@ void tst_FileDownload::testRedirect()
     QNetworkRequest request(QUrl("http://www.example.com/go/download"));
     
     mDownload = new FileDownload(request);
-    mDownload->setDownloadPath("tmp/download.dat");
+    mDownload->setDestinationPath("tmp/download.dat");
     mDownload->setNetworkAccessManager(mNetAccessManager);
     connect(mDownload, SIGNAL(finished()), SLOT(onFinished()));
     connect(mDownload, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(onError(QNetworkReply::NetworkError)));
@@ -114,7 +114,7 @@ void tst_FileDownload::testErrorResponse()
     QNetworkRequest request(QUrl("http://www.example.com/files/error.json"));
     
     mDownload = new FileDownload(request);
-    mDownload->setDownloadPath("tmp/download.dat");
+    mDownload->setDestinationPath("tmp/download.dat");
     mDownload->setNetworkAccessManager(mNetAccessManager);
     connect(mDownload, SIGNAL(finished()), SLOT(onFinished()));
     connect(mDownload, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(onError(QNetworkReply::NetworkError)));

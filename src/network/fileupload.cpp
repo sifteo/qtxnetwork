@@ -1,20 +1,14 @@
 #include "fileupload.h"
+#include "fileupload_p.h"
 #include "networkexchange.h"
 
 QTX_BEGIN_NAMESPACE
 
 
-//FileUpload::FileUpload(NetworkExchange *connection)
-FileUpload::FileUpload(const QNetworkRequest & request)
-    : mRequest(request),
-      mConnection(0),
-      mBytesSent(0),
-      mBytesTotal(0),
-      mDataTxTimeout(60000),  // 60000 msec = 60 sec = 1 min
-      mRedirecting(false),
-      mAccessManager(0)
+FileUpload::FileUpload(const QNetworkRequest & request, QObject *parent /* = 0 */)
+    : FileTransfer(*new FileUploadPrivate(this), parent)
 {
-    //mConnection->setParent(this);
+    d_ptr->request = request;
 }
 
 FileUpload::~FileUpload()
@@ -24,150 +18,126 @@ FileUpload::~FileUpload()
 void FileUpload::start()
 {
     //qDebug() << "FileUpload::start";
-    //qDebug() << "  path: " << mPath;
+    //qDebug() << "  path: " << d_ptr->path;
     //qDebug() << "  thread: " << QThread::currentThread();
     
-    mConnection = new NetworkExchange(mRequest, this);
-    if (mAccessManager) {
-        mConnection->setNetworkAccessManager(mAccessManager);
+    FileUploadPrivate *d = static_cast<FileUploadPrivate *>(d_ptr);
+    
+    d->exchange = new NetworkExchange(d->request, this);
+    if (d->netAccessManager) {
+        d->exchange->setNetworkAccessManager(d->netAccessManager);
     }
     
-    mFile = new QFile(mPath, this);
-    if (!mFile->open(QFile::ReadOnly)) {
-        setError(QNetworkReply::UnknownContentError, mFile->errorString());
+    d->file = new QFile(d->path, this);
+    if (!d->file->open(QFile::ReadOnly)) {
+        setError(QNetworkReply::UnknownContentError, d->file->errorString());
         emit error(QNetworkReply::UnknownContentError);
         return;
     }
     
-    //qDebug() << "  fileSize: " << mFile->size();
-    
-    connect(mConnection, SIGNAL(replyReceived()), SLOT(onReplyReceived()));
-    connect(mConnection, SIGNAL(downloadProgress(qint64, qint64)), SLOT(onDownloadProgress(qint64, qint64)));
-    connect(mConnection, SIGNAL(uploadProgress(qint64, qint64)), SLOT(onUploadProgress(qint64, qint64)));
-    connect(mConnection, SIGNAL(readyRead()), SLOT(onReadyRead()));
-    connect(mConnection, SIGNAL(redirected(const QUrl &)), SLOT(onRedirected(const QUrl &)));
-    connect(mConnection, SIGNAL(finished()), SLOT(onFinished()));
-    connect(mConnection, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(onError(QNetworkReply::NetworkError)));
-    connect(&mDataTxTimer, SIGNAL(timeout()), this, SLOT(onDataTxTimeout()));
+    connect(d->exchange, SIGNAL(replyReceived()), SLOT(onReplyReceived()));
+    connect(d->exchange, SIGNAL(uploadProgress(qint64, qint64)), SLOT(onUploadProgress(qint64, qint64)));
+    connect(d->exchange, SIGNAL(readyRead()), SLOT(onReadyRead()));
+    connect(d->exchange, SIGNAL(redirected(const QUrl &)), SLOT(onRedirected(const QUrl &)));
+    connect(d->exchange, SIGNAL(finished()), SLOT(onFinished()));
+    connect(d->exchange, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(onError(QNetworkReply::NetworkError)));
+    connect(&d->txTimer, SIGNAL(timeout()), this, SLOT(onDataTxTimeout()));
     
     emit started();
     
-    mConnection->post(mFile);
-    mDataTxTimer.start(mDataTxTimeout);
-}
-
-void FileUpload::abort()
-{
-    mConnection->abort();
+    d->exchange->post(d->file);
+    d->txTimer.start(d->txTimeout);
 }
 
 QString FileUpload::sourcePath() const
 {
-    return mPath;
+    return this->path();
 }
 
-void FileUpload::setUploadPath(const QString & path)
+void FileUpload::setSourcePath(const QString & path)
 {
-    mPath = path;
-}
-
-void FileUpload::setNetworkAccessManager(QNetworkAccessManager *manager)
-{
-    mAccessManager = manager;
+    this->setPath(path);
 }
 
 void FileUpload::onReplyReceived()
 {
-    //qDebug() << "FileUpload::onReplyReceived";
-    
-    QUrl url = mConnection->replyAttribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+    FileUploadPrivate *d = static_cast<FileUploadPrivate *>(d_ptr);
+
+    QUrl url = d->exchange->replyAttribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
     if (!url.isEmpty()) {
-        mRedirecting = true;
+        d->isRedirecting = true;
     } else {
-        mRedirecting = false;
+        d->isRedirecting = false;
     }
 }
 
 void FileUpload::onReadyRead()
 {
-    //qDebug() << "FileUpload::onReadyRead";
-}
-
-void FileUpload::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
-{
-    Q_UNUSED(bytesReceived)
-    Q_UNUSED(bytesTotal)
-    
-    //qDebug() << "FileUpload::onDownloadProgress";
 }
 
 void FileUpload::onUploadProgress(qint64 bytesSent, qint64 bytesTotal)
 {
-    //qDebug() << "FileUpload::onUploadProgress" << bytesSent << bytesTotal;
+    FileUploadPrivate *d = static_cast<FileUploadPrivate *>(d_ptr);
+
+    d->bytesSent = bytesSent;
+    d->bytesTotal = bytesTotal;
     
-    mBytesSent = bytesSent;
-    mBytesTotal = bytesTotal;
-    
-    mDataTxTimer.start(mDataTxTimeout);
+    d->txTimer.start(d->txTimeout);
     
     // while requests are being redirected, actual progress is indeterminate
-    qint64 total = mRedirecting ? -1 : bytesTotal;
+    qint64 total = d->isRedirecting ? -1 : bytesTotal;
     emit progress(bytesSent, total);
 }
 
 void FileUpload::onRedirected(const QUrl & url)
 {
     Q_UNUSED(url)
-    
-    //mDataTxTimer.start(mDataTxTimeout);
 }
 
 void FileUpload::onFinished()
 {
-    //qDebug() << "FileUpload::onFinished";
-    
-    if (!mFile) {
-        qWarning() << "FileUpload attempted to finish with invalid file";
+    FileUploadPrivate *d = static_cast<FileUploadPrivate *>(d_ptr);
+
+    if (!d->file) {
+        setError(QNetworkReply::UnknownContentError, "Illegal attempt to close invalid file");
+        emit error(QNetworkReply::UnknownContentError);
         return;
     }
     
-    mDataTxTimer.stop();
-    mFile->close();
+    d->txTimer.stop();
+    d->file->close();
     
     if (this->autoDelete()) {
         this->deleteLater();
     }
     
-    //if (!error()) {
-        emit finished();
-    //}
+    emit finished();
 }
 
 void FileUpload::onError(QNetworkReply::NetworkError code)
 {
-    qDebug() << "FileUpload::onError";
-    qDebug() << "  code: " << code;
-    qDebug() << "  string: " << mConnection->errorString();
-    
-    mDataTxTimer.stop();
+    FileUploadPrivate *d = static_cast<FileUploadPrivate *>(d_ptr);
+
+    d->txTimer.stop();
     
     // preserve custom errors, if set
-    if (error() != QNetworkReply::TimeoutError) {
-        setError(code, mConnection->errorString());
+    QNetworkReply::NetworkError e = this->error();
+    if (e != QNetworkReply::TimeoutError) {
+        setError(code, d->exchange->errorString());
     }
     emit error(code);
 }
 
 void FileUpload::onDataTxTimeout()
 {
-    qDebug() << "FileUpload::onDataTxTimeout";
+    FileUploadPrivate *d = static_cast<FileUploadPrivate *>(d_ptr);
     
-    mDataTxTimer.stop();
+    d->txTimer.stop();
     
     // Aborting a connection will result an error signal being emitted, followed
     // by a finished signal.  To keep the lifecycle consistent, handling will be
     // done in the corresponding slots.
-    setError(QNetworkReply::TimeoutError, "Data receive timeout");
+    setError(QNetworkReply::TimeoutError, "Data transmit timeout");
     abort();
 }
 

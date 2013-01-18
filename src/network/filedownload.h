@@ -9,18 +9,15 @@
 QTX_BEGIN_NAMESPACE
 
 
-class NetworkExchange;
-
 class FileDownload : public FileTransfer
 {
     Q_OBJECT
 
 public:
-    FileDownload(const QNetworkRequest & request);
+    FileDownload(const QNetworkRequest & request, QObject *parent = 0);
     virtual ~FileDownload();
     
     void start();
-    void abort();
     
     QUrl currentUrl() const;
     QUrl originalUrl() const;
@@ -28,10 +25,8 @@ public:
     qint64 bytesReceived() const;
     qint64 bytesTotal() const;
     
-    void setDownloadPath(const QString & path);
+    void setDestinationPath(const QString & path);
     void setExpectedFileSize(qint64 size);
-    
-    void setNetworkAccessManager(QNetworkAccessManager *manager);
     
 private slots:
     void onReplyReceived();
@@ -41,23 +36,6 @@ private slots:
     void onFinished();
     void onError(QNetworkReply::NetworkError code);
     void onDataRxTimeout();
-    
-private:
-    QNetworkRequest mRequest;
-    NetworkExchange *mConnection;
-    QUrl mOriginalUrl;
-    
-    QFile *mFile;
-    QString mPath;
-    qint64 mBytesReceived;
-    qint64 mBytesTotal;
-    qint64 mExpectedFileSize;
-    
-    QTimer mDataRxTimer;
-    int mDataRxTimeout;
-    bool mRedirecting;
-    
-    QNetworkAccessManager *mAccessManager;
 };
 
 

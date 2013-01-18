@@ -2,9 +2,12 @@
 #define QTXNETWORK_FILETRANSFER_P_H
 
 #include "filetransfer.h"
+#include "networkexchange.h"
 
 QTX_BEGIN_NAMESPACE
 
+
+class NetworkExchange;
 
 class FileTransferPrivate
 {
@@ -15,6 +18,13 @@ public:
 public:
     FileTransfer *q_ptr;
     Q_DECLARE_PUBLIC(FileTransfer);
+    
+    QNetworkAccessManager *netAccessManager;
+    QNetworkRequest request;
+    NetworkExchange *exchange;
+    
+    QFile *file;
+    QString path;
     
     bool autoDelete;
     

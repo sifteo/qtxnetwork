@@ -10,6 +10,12 @@ FileTransfer::FileTransfer(QObject *parent /* = 0 */)
 {
 }
 
+FileTransfer::FileTransfer(FileTransferPrivate &d, QObject *parent /* = 0 */)
+    : QObject(parent),
+      d_ptr(&d)
+{
+}
+
 FileTransfer::~FileTransfer()
 {
     if (d_ptr) {
@@ -18,9 +24,29 @@ FileTransfer::~FileTransfer()
     }
 }
 
+void FileTransfer::abort()
+{
+    d_ptr->exchange->abort();
+}
+
+QString FileTransfer::path() const
+{
+    return d_ptr->path;
+}
+
 bool FileTransfer::autoDelete() const
 {
     return d_ptr->autoDelete;
+}
+
+void FileTransfer::setPath(const QString & path)
+{
+    d_ptr->path = path;
+}
+
+void FileTransfer::setNetworkAccessManager(QNetworkAccessManager *manager)
+{
+    d_ptr->netAccessManager = manager;
 }
 
 void FileTransfer::setAutoDelete(bool autoDelete /* = true */)
@@ -47,6 +73,9 @@ void FileTransfer::setError(QNetworkReply::NetworkError errorCode, const QString
 
 FileTransferPrivate::FileTransferPrivate(FileTransfer *q)
     : q_ptr(q),
+      netAccessManager(0),
+      exchange(0),
+      file(0),
       autoDelete(false),
       errorCode(QNetworkReply::NoError)
 {

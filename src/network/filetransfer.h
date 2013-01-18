@@ -19,8 +19,12 @@ public:
     virtual ~FileTransfer();
     
     virtual void start() = 0;
-    virtual void abort() = 0;
+    virtual void abort();
     
+    QString path() const;
+    
+    void setPath(const QString & path);
+    void setNetworkAccessManager(QNetworkAccessManager *manager);
     void setAutoDelete(bool autoDelete = true);
     
     QNetworkReply::NetworkError error() const;
@@ -37,7 +41,8 @@ protected:
     bool autoDelete() const;
     void setError(QNetworkReply::NetworkError errorCode, const QString & errorString);
     
-private:
+protected:
+    FileTransfer(FileTransferPrivate &d, QObject *parent = 0);
     FileTransferPrivate *d_ptr;
 private:
     Q_DECLARE_PRIVATE(FileTransfer);
