@@ -1,6 +1,8 @@
 #ifndef QTXXML_GLOBAL_H
 #define QTXXML_GLOBAL_H
 
+#ifdef QTX_ENABLE_NAMESPACE
+
 #ifndef QTX_NAMESPACE
 #  define QTX_NAMESPACE Qtx
 #endif
@@ -12,6 +14,23 @@
 #endif
 #ifndef QTX_END_NAMESPACE
 #  define QTX_END_NAMESPACE }
+#endif
+
+#else
+
+#ifndef QTX_NAMESPACE
+#  define QTX_NAMESPACE
+#endif
+#ifndef QTX_USE_NAMESPACE
+#  define QTX_USE_NAMESPACE
+#endif
+#ifndef QTX_BEGIN_NAMESPACE
+#  define QTX_BEGIN_NAMESPACE
+#endif
+#ifndef QTX_END_NAMESPACE
+#  define QTX_END_NAMESPACE
+#endif
+
 #endif
 
 #endif /* QTXXML_GLOBAL_H */
