@@ -7,5 +7,8 @@
 #include "../src/network/filetransfermanager.h"
 #include "../src/network/fileupload.h"
 #include "../src/network/networkexchange.h"
+#include "../src/network/pluggablenetworkaccessmanager.h"
+#include "../src/network/protocolfactory.h"
+#include "../src/network/protocolplugin.h"
 
 #endif
