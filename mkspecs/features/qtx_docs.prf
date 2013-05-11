@@ -1,0 +1,20 @@
+qtPrepareTool(QDOC, qdoc)
+
+__ROOT__ = $$dirname(_PRO_FILE_)
+DOCS_MODULE = $$section($$list($$basename(_PRO_FILE_)), ., 0, 0)
+DOCS_CONF = $$join(DOCS_MODULE,,$$join(__ROOT__,,,/doc/config/),.qdocconf)
+DOCS_OUTPUTDIR = $$join(__ROOT__,,,/doc/$$DOCS_MODULE)
+
+QDOC += -outputdir $$DOCS_OUTPUTDIR
+doc_command = $$QDOC $$DOCS_CONF
+
+DOC_TARGETS += prepare_docs generate_docs
+prepare_docs.commands += $$doc_command -prepare -no-link-errors
+generate_docs.commands += $$doc_command -generate
+QMAKE_EXTRA_TARGETS += $$DOC_TARGETS
+
+html_docs.commands = $(MAKE) -f $(MAKEFILE) prepare_docs && $(MAKE) -f $(MAKEFILE) generate_docs
+QMAKE_EXTRA_TARGETS += html_docs
+
+docs.commands = $(MAKE) -f $(MAKEFILE) html_docs
+QMAKE_EXTRA_TARGETS += docs

@@ -10,3 +10,5 @@ exists($$_PRO_FILE_PWD_/tests/tests.pro) {
     sub_tests.depends = sub_src   # The tests may have a run-time only dependency on other parts
     SUBDIRS += sub_tests
 }
+
+include(qtx_docs.prf)

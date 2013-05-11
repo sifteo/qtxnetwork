@@ -1,0 +1,11 @@
+/*!
+    \module QtxNetwork
+    \title QtxNetwork
+    \brief The QtxNetwork module contains classes to make network programming easier.
+    
+    To include the definitions of this module's classes, use the following directive:
+    
+    \code
+        #include <QtxNetwork>
+    \endcode
+*/

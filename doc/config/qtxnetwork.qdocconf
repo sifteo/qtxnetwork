@@ -1,0 +1,26 @@
+include(qt-html-templates-offline.qdocconf)
+
+project = QtxNetwork
+description = QtxNetwork Documentation
+
+sourcedirs += ../src \
+              ../../src
+
+headerdirs += ../src \
+              ../../src
+
+exampledirs += ../../examples
+
+imagedirs += ./images
+
+excludedirs +=
+
+
+# Do NOT change the variables after this line unless you know what you are doing.
+
+outputformats = HTML
+
+sources.fileextensions = "*.cpp *.qdoc *.mm *.qml"
+headers.fileextensions = "*.h *.ch *.h++ *.hh *.hpp *.hxx"
+examples.fileextensions = "*.cpp *.h *.js *.svg *.xml *.ui *.qml"
+examples.imageextensions = "*.png *.jpeg *.jpg *.gif *.mng"
