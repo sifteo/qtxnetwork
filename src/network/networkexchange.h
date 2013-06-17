@@ -36,6 +36,7 @@ public:
     void setMaxRedirects(qint32 max);
     void setNetworkAccessManager(QNetworkAccessManager *manager);
     
+    QNetworkReply::NetworkError error() const;
     QString errorString() const;
     
 signals:
@@ -48,6 +49,7 @@ signals:
     void error(QNetworkReply::NetworkError code);
     
 protected:
+    void setError(QNetworkReply::NetworkError code);
     void setErrorString(const QString & str);
     
 private slots:

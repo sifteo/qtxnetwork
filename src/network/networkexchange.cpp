@@ -36,6 +36,7 @@ public:
     QList<QUrl> urlsVisited;
     qint32 maxRedirects;
     
+    QNetworkReply::NetworkError error;
     QString errorString;
 };
 
@@ -139,9 +140,19 @@ void NetworkExchange::setNetworkAccessManager(QNetworkAccessManager *manager)
     d_ptr->netAccessManager = manager;
 }
 
+QNetworkReply::NetworkError NetworkExchange::error() const
+{
+    return d_ptr->error;
+}
+
 QString NetworkExchange::errorString() const
 {
     return d_ptr->errorString;
+}
+
+void NetworkExchange::setError(QNetworkReply::NetworkError code)
+{
+    d_ptr->error = code;
 }
 
 void NetworkExchange::setErrorString(const QString & str)
@@ -174,11 +185,13 @@ void NetworkExchange::onMetaDataChanged()
         redirectReply->abort();
         
         if (d_ptr->urlsVisited.size() > d_ptr->maxRedirects) {
+            setError(QNetworkReply::ProtocolUnknownError);
             setErrorString("Too many redirections");
             emit error(QNetworkReply::ProtocolUnknownError);
             emit finished();
             return;
         } else if (d_ptr->urlsVisited.contains(url)) {
+            setError(QNetworkReply::ProtocolUnknownError);
             setErrorString("Infinite redirection loop detected");
             emit error(QNetworkReply::ProtocolUnknownError);
             emit finished();
@@ -236,11 +249,13 @@ void NetworkExchange::onFinished()
         QNetworkReply *redirectReply = d_ptr->reply;
     
         if (d_ptr->urlsVisited.size() > d_ptr->maxRedirects) {
+            setError(QNetworkReply::ProtocolUnknownError);
             setErrorString("Too many redirections");
             emit error(QNetworkReply::ProtocolUnknownError);
             emit finished();
             return;
         } else if (d_ptr->urlsVisited.contains(url)) {
+            setError(QNetworkReply::ProtocolUnknownError);
             setErrorString("Infinite redirection loop detected");
             emit error(QNetworkReply::ProtocolUnknownError);
             emit finished();
@@ -263,6 +278,7 @@ void NetworkExchange::onError(QNetworkReply::NetworkError code)
     //       case, so finalizing the connection is deferred until then.
     //       See: http://doc.trolltech.com/4.7/qnetworkreply.html#error-2
     
+    setError(code);
     setErrorString(d_ptr->reply->errorString());
     emit error(code);
 }
@@ -284,7 +300,8 @@ NetworkExchangePrivate::NetworkExchangePrivate(NetworkExchange *q)
       method(GetMethod),
       reply(0),
       replyReceived(false),
-      maxRedirects(5)
+      maxRedirects(5),
+      error(QNetworkReply::NoError)
 {
 }
 

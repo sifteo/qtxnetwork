@@ -64,6 +64,7 @@ void tst_NetworkExchange::testGet()
     QCOMPARE(mExchange->replyAttribute(QNetworkRequest::HttpReasonPhraseAttribute).toString(), QString("OK"));
     QCOMPARE(QString::fromUtf8(mExchange->replyRawHeader("Content-Type")), QString("text/plain"));
     QCOMPARE(QString::fromUtf8(mExchange->readAll()), QString("Hello World!"));
+    QCOMPARE(mExchange->error(), QNetworkReply::NoError);
 }
 
 void tst_NetworkExchange::testPost()
@@ -96,6 +97,7 @@ void tst_NetworkExchange::testPost()
     QCOMPARE(mExchange->replyAttribute(QNetworkRequest::HttpReasonPhraseAttribute).toString(), QString("OK"));
     QCOMPARE(QString::fromUtf8(mExchange->replyRawHeader("Content-Type")), QString("text/plain"));
     QCOMPARE(QString::fromUtf8(mExchange->readAll()), QString("Hello World!"));
+    QCOMPARE(mExchange->error(), QNetworkReply::NoError);
 }
 
 void tst_NetworkExchange::testRedirect()
@@ -128,6 +130,7 @@ void tst_NetworkExchange::testRedirect()
     QCOMPARE(mExchange->replyAttribute(QNetworkRequest::HttpReasonPhraseAttribute).toString(), QString("OK"));
     QCOMPARE(QString::fromUtf8(mExchange->replyRawHeader("Content-Type")), QString("text/plain"));
     QCOMPARE(QString::fromUtf8(mExchange->readAll()), QString("Hello World!"));
+    QCOMPARE(mExchange->error(), QNetworkReply::NoError);
 }
 
 void tst_NetworkExchange::testMultipleRedirects()
@@ -160,6 +163,7 @@ void tst_NetworkExchange::testMultipleRedirects()
     QCOMPARE(mExchange->replyAttribute(QNetworkRequest::HttpReasonPhraseAttribute).toString(), QString("OK"));
     QCOMPARE(QString::fromUtf8(mExchange->replyRawHeader("Content-Type")), QString("text/plain"));
     QCOMPARE(QString::fromUtf8(mExchange->readAll()), QString("Hello World!"));
+    QCOMPARE(mExchange->error(), QNetworkReply::NoError);
 }
 
 void tst_NetworkExchange::testMaxRedirects()
@@ -193,6 +197,7 @@ void tst_NetworkExchange::testMaxRedirects()
     QCOMPARE(mExchange->replyAttribute(QNetworkRequest::HttpReasonPhraseAttribute).toString(), QString("Found"));
     QCOMPARE(QString::fromUtf8(mExchange->replyRawHeader("Content-Type")), QString("application/json"));
     QCOMPARE(QString::fromUtf8(mExchange->readAll()), QString("{ \"redirect\": true }"));
+    QCOMPARE(mExchange->error(), QNetworkReply::ProtocolUnknownError);
 }
 
 void tst_NetworkExchange::testRedirectLoop()
@@ -223,6 +228,7 @@ void tst_NetworkExchange::testRedirectLoop()
     QCOMPARE(mExchange->replyAttribute(QNetworkRequest::HttpReasonPhraseAttribute).toString(), QString("Found"));
     QCOMPARE(QString::fromUtf8(mExchange->replyRawHeader("Content-Type")), QString("application/json"));
     QCOMPARE(QString::fromUtf8(mExchange->readAll()), QString("{ \"redirect\": true }"));
+    QCOMPARE(mExchange->error(), QNetworkReply::ProtocolUnknownError);
 }
 
 void tst_NetworkExchange::testErrorResponse()
@@ -253,6 +259,7 @@ void tst_NetworkExchange::testErrorResponse()
     QCOMPARE(mExchange->replyAttribute(QNetworkRequest::HttpReasonPhraseAttribute).toString(), QString("Internal Server Error"));
     QCOMPARE(QString::fromUtf8(mExchange->replyRawHeader("Content-Type")), QString("application/json"));
     QCOMPARE(QString::fromUtf8(mExchange->readAll()), QString("{ \"error\": \"something went wrong\" }"));
+    QCOMPARE(mExchange->error(), QNetworkReply::UnknownContentError);
 }
 
 QIODevice *tst_NetworkExchange::createIncomingData(const QNetworkRequest & req, QIODevice * outgoingData /* = 0 */)
